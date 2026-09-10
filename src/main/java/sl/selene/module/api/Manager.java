@@ -5,6 +5,7 @@ import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import sl.selene.Selene;
 import sl.selene.module.impl.combat.AimAssist;
+import sl.selene.module.impl.combat.ShieldBreaker;
 import sl.selene.module.impl.combat.TriggerBot;
 import sl.selene.module.impl.movement.STap;
 import sl.selene.module.impl.movement.SnapTap;
@@ -38,6 +39,7 @@ public class Manager {
    public Manager() {
       this.module.add(new AimAssist());
       this.module.add(new TriggerBot());
+      this.module.add(new ShieldBreaker());
       this.module.add(new ToggleSprint());
       this.module.add(new WTap());
       this.module.add(new STap());

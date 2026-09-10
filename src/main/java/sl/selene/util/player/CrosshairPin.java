@@ -24,6 +24,15 @@ public final class CrosshairPin {
       return true;
    }
 
+   public static boolean take(Object requester, HitResult hit) {
+      if (requester == null || hit == null) {
+         return false;
+      }
+      owner = requester;
+      pinned = hit;
+      return true;
+   }
+
    public static void clear(Object requester) {
       if (owner == requester) {
          owner = null;

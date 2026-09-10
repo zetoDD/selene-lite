@@ -60,13 +60,9 @@ public class TriggerBot extends Module {
    public static BooleanSetting noInvisible = new BooleanSetting("No Invisible", true);
    public static BooleanSetting noCrystals = new BooleanSetting("No Crystals", true);
    public static BooleanSetting noShields = new BooleanSetting("No Shields", true);
-   public static BooleanSetting agc = new BooleanSetting("AGC", false);
-   public static SliderSetting agcMargin = new SliderSetting("AGC Margin", 0.15F, 0.0F, 0.5F, 0.01F, false)
-         .hidden(() -> !agc.get());
    public static ModeSetting fireMode = new ModeSetting("Fire Mode", "Always", "Always", "Hold LMB");
 
    private static final double CAST_PADDING = 0.2;
-   private static final double AGC_MIN_CAP = 0.5;
 
    private static final long CLICK_HOLD_MIN = 30L;
    private static final long CLICK_HOLD_SPREAD = 55L;
@@ -82,7 +78,7 @@ public class TriggerBot extends Module {
    public TriggerBot() {
       this.addSettings(new Setting[] {
          reach, reachVariance, reaction, reactionVariance, cooldownPercent, targetMode, weaponMode,
-         hurtTime, teams, crits, noInvisible, noCrystals, noShields, agc, agcMargin, fireMode
+         hurtTime, teams, crits, noInvisible, noCrystals, noShields, fireMode
       });
    }
 
@@ -183,7 +179,7 @@ public class TriggerBot extends Module {
 
    private double rollReach() {
       float variance = Math.max(0.0F, reachVariance.get());
-      return Math.max(1.0F, reach.get() - (float) Math.random() * variance);
+      return Math.max(1.0F, CombatUtil.clampReach(reach.get() - (float) Math.random() * variance));
    }
 
    private long rollReaction() {
@@ -252,16 +248,6 @@ public class TriggerBot extends Module {
          }
       }
 
-      if (best == null) {
-         return null;
-      }
-      if (agc.get()) {
-         double margin = Math.max(0.0, (double) agcMargin.get());
-         double cap = Math.max(AGC_MIN_CAP, reach - margin);
-         if (bestSq > cap * cap) {
-            return null;
-         }
-      }
       return best;
    }
 

@@ -14,7 +14,14 @@ import net.minecraft.util.math.Vec3d;
 
 @Environment(EnvType.CLIENT)
 public final class CombatUtil {
+
+   public static final double MAX_REACH = 3.0D;
+
    private CombatUtil() {
+   }
+
+   public static double clampReach(double reach) {
+      return Math.min(Math.max(0.5D, reach), MAX_REACH);
    }
 
    public enum TargetType {

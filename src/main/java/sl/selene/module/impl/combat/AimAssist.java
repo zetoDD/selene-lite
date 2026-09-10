@@ -28,7 +28,7 @@ import sl.selene.util.player.AimAssistEngine;
 @Environment(EnvType.CLIENT)
 public class AimAssist extends Module {
 
-   public static SliderSetting range = new SliderSetting("Range", 4.5F, 1.0F, 8.0F, 0.1F, false);
+   public static SliderSetting range = new SliderSetting("Range", 4.5F, 1.0F, 6.0F, 0.1F, false);
    public static SliderSetting fov = new SliderSetting("FOV", 100.0F, 10.0F, 130.0F, 1.0F, false);
 
    public static SliderSetting turnSpeed = new SliderSetting("Turn Speed (deg/s)", 32.0F, 5.0F, 90.0F, 1.0F, false);

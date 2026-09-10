@@ -64,15 +64,11 @@ public class Hud extends Module {
    private static final float NOTIFICATION_TEXT_SIZE = 21.0F;
    private static final float NOTIFICATION_TOGGLE_WIDTH = 34.0F;
    private static final float NOTIFICATION_TOGGLE_HEIGHT = 16.0F;
-   private static final float NOTIFICATION_TEXT_LEFT = 32.0F;
+   private static final float NOTIFICATION_TEXT_LEFT = 16.0F;
    private static final float NOTIFICATION_TEXT_TOGGLE_GAP = 13.0F;
    private static final float NOTIFICATION_RIGHT_PADDING = 16.0F;
    private static final float NOTIFICATION_MIN_WIDTH = 220.0F;
    private static final float NOTIFICATION_MAX_WIDTH = 430.0F;
-   private static final float NOTIFICATION_ACCENT_X = 14.0F;
-   private static final float NOTIFICATION_ACCENT_Y = 12.0F;
-   private static final float NOTIFICATION_ACCENT_WIDTH = 4.0F;
-   private static final float NOTIFICATION_ACCENT_HEIGHT = 20.0F;
    private static final float NOTIFICATION_PROGRESS_HEIGHT = 2.0F;
    private final List<Hud.Notification> notifications = new ArrayList<>();
 
@@ -239,14 +235,6 @@ public class Hud extends Module {
             int accentColor = notificationAccentColor(notification);
             matrix.pushScale(scale, scale, centerX, centerY);
             drawClientRect(matrix, animatedX, currentY, notificationWidth, NOTIFICATION_HEIGHT, 12.0F, animValue, 1.0F);
-            matrix.rect(
-                  animatedX + NOTIFICATION_ACCENT_X,
-                  currentY + NOTIFICATION_ACCENT_Y,
-                  NOTIFICATION_ACCENT_WIDTH,
-                  NOTIFICATION_ACCENT_HEIGHT,
-                  1.5F,
-                  ColorUtil.replAlpha(accentColor, Math.round(225.0F * animValue))
-            );
             matrix.text(
                   FontRegistry.INTER_SEMIBOLD,
                   animatedX + NOTIFICATION_TEXT_LEFT,
