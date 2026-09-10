@@ -1,5 +1,6 @@
 package sl.selene.ui.gui.component.render;
 
+import java.awt.Desktop;
 import java.util.ArrayList;
 import java.util.List;
 import net.fabricmc.api.EnvType;
@@ -16,7 +17,7 @@ import sl.selene.util.render.text.FontRegistry;
 @Environment(EnvType.CLIENT)
 public final class GuiRenderConfigPopup extends GuiScreen {
 
-   private static final float POPUP_W = 228.0F;
+   private static final float POPUP_W = 260.0F;
    private static final float POPUP_H = 280.0F;
 
    private static final float PAD = 12.0F;
@@ -122,13 +123,15 @@ public final class GuiRenderConfigPopup extends GuiScreen {
       }
 
       float buttonGap = 6.0F;
-      float buttonW = (POPUP_W - PAD * 2.0F - buttonGap * 2.0F) / 3.0F;
+      float buttonW = (POPUP_W - PAD * 2.0F - buttonGap * 3.0F) / 4.0F;
       renderConfigButton(renderer, "Save", px + PAD, py + BUTTONS_Y, buttonW, BUTTON_H, mouseX, mouseY, alpha, textColor, false);
       renderConfigButton(renderer, "Load", px + PAD + buttonW + buttonGap, py + BUTTONS_Y, buttonW, BUTTON_H, mouseX, mouseY, alpha, textColor, false);
       boolean deleteArmed = GuiScreen.configDeleteArmed
             && System.currentTimeMillis() < GuiScreen.configDeleteArmedUntil;
       renderConfigButton(renderer, deleteArmed ? "Confirm?" : "Delete", px + PAD + (buttonW + buttonGap) * 2.0F,
             py + BUTTONS_Y, buttonW, BUTTON_H, mouseX, mouseY, alpha, textColor, deleteArmed);
+      renderConfigButton(renderer, "Folder", px + PAD + (buttonW + buttonGap) * 3.0F,
+            py + BUTTONS_Y, buttonW, BUTTON_H, mouseX, mouseY, alpha, textColor, false);
 
       renderer.text(FontRegistry.INTER_MEDIUM, px + PAD, py + LIST_TOP - 4.0F, 12.0F, "Saved configs", muted);
       float listY = py + LIST_TOP + 6.0F;
@@ -157,7 +160,6 @@ public final class GuiRenderConfigPopup extends GuiScreen {
          if (isCurrent) {
             renderer.rect(px + PAD, rowY, POPUP_W - PAD * 2.0F, ROW_H, 4.0F,
                   Renderer2D.ColorUtil.rgba(255, 255, 255, (int)(16.0F * alpha)));
-            renderer.rect(px + PAD + 1.5F, rowY + 3.0F, 2.0F, ROW_H - 6.0F, 1.0F, fieldColor);
          }
          if (hovered) {
             renderer.rect(px + PAD, rowY, POPUP_W - PAD * 2.0F, ROW_H, 4.0F,
@@ -258,7 +260,7 @@ public final class GuiRenderConfigPopup extends GuiScreen {
             .anyMatch(c -> c.getName().equalsIgnoreCase(name));
       boolean hasManager = Selene.get != null && Selene.get.configManager != null;
       float buttonGap = 6.0F;
-      float buttonW = (POPUP_W - PAD * 2.0F - buttonGap * 2.0F) / 3.0F;
+      float buttonW = (POPUP_W - PAD * 2.0F - buttonGap * 3.0F) / 4.0F;
       float buttonsY = py + BUTTONS_Y;
       if (GuiRenderMain.isHovered(mouseX, mouseY, px + PAD, buttonsY, buttonW, BUTTON_H)) {
          if (valid && hasManager) {
@@ -307,6 +309,12 @@ public final class GuiRenderConfigPopup extends GuiScreen {
          return true;
       }
 
+      if (GuiRenderMain.isHovered(mouseX, mouseY, px + PAD + (buttonW + buttonGap) * 3.0F, buttonsY, buttonW, BUTTON_H)) {
+         GuiScreen.configDeleteArmed = false;
+         openConfigFolder();
+         return true;
+      }
+
       float listY = py + LIST_TOP + 6.0F;
       int index = 0;
       for (Config config : sortedConfigs()) {
@@ -332,6 +340,25 @@ public final class GuiRenderConfigPopup extends GuiScreen {
 
    private static float centeredBaseline(float height, float textSize) {
       return Math.max(1.0F, (height - textSize) * 0.5F + textSize * 0.82F);
+   }
+
+   private static void openConfigFolder() {
+      boolean opened = false;
+      try {
+         if (Desktop.isDesktopSupported()) {
+            Desktop desktop = Desktop.getDesktop();
+            if (desktop.isSupported(Desktop.Action.OPEN)) {
+               desktop.open(ConfigManager.configDirectory);
+               opened = true;
+            }
+         }
+      } catch (Exception ignored) {
+      }
+      if (opened) {
+         setStatus("Opened config folder");
+      } else {
+         setStatus(ConfigManager.configDirectory.getAbsolutePath());
+      }
    }
 
    private static String truncate(String text, float maxWidth, Renderer2D renderer) {

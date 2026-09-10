@@ -21,7 +21,7 @@ import sl.selene.util.player.AimAssistEngine;
 
 @IModule(
    name = "AimAssist",
-   description = "Smoothly pulls your crosshair toward nearby targets", 
+   description = "Smoothly pulls your crosshair toward nearby targets",
    category = Category.Combat,
    bind = -1
 )
@@ -37,15 +37,23 @@ public class AimAssist extends Module {
 
    public static SliderSetting smoothness = new SliderSetting("Smoothness", 6.0F, 1.0F, 16.0F, 0.5F, false);
 
+   public static SliderSetting jitter = new SliderSetting("Jitter", 0.3F, 0.0F, 3.0F, 0.05F, false);
+
    public static SliderSetting wobble = new SliderSetting("Wobble", 0.1F, 0.0F, 0.5F, 0.01F, false);
    public static ModeSetting aimPoint = new ModeSetting("Aim Point", "Chest", "Chest", "Head", "Feet");
    public static ModeSetting aimMode = new ModeSetting("Aim Mode", "Wind", "Wind", "Smooth", "Instant");
 
+   public static BooleanSetting perfectCentering = new BooleanSetting("Perfect Centering", true);
+
+   public static BooleanSetting teams = new BooleanSetting("Teams", false);
+
    public static ModeSetting targetMode = new ModeSetting(
-      "Target Mode", "Players", "Players", "Hostiles", "Mobs", "Everything");
+      "Target Mode", "Everything", "Players", "Hostiles", "Mobs", "Everything");
 
    public static ModeSetting weaponMode = new ModeSetting("Weapon", "Melee", "Any", "Sword", "Axe", "Melee");
    public static BooleanSetting throughWalls = new BooleanSetting("Through Walls", false);
+
+   public static BooleanSetting humanize = new BooleanSetting("Humanize", true);
 
    private final AimAssistEngine engine = new AimAssistEngine();
 
@@ -53,8 +61,8 @@ public class AimAssist extends Module {
 
    public AimAssist() {
       this.addSettings(new Setting[] {
-         range, fov, turnSpeed, speed, smoothness, wobble,
-         aimPoint, aimMode, targetMode, weaponMode, throughWalls
+         range, fov, turnSpeed, speed, smoothness, jitter, wobble,
+         aimPoint, aimMode, perfectCentering, teams, targetMode, weaponMode, throughWalls, humanize
       });
    }
 
@@ -85,6 +93,7 @@ public class AimAssist extends Module {
       Entity newTarget = findBestTarget();
       if (newTarget != currentTarget) {
          currentTarget = newTarget;
+         engine.resetReaction();
       }
    }
 
@@ -108,7 +117,19 @@ public class AimAssist extends Module {
       }
 
       Vec3d aim = CombatUtil.aimPoint((LivingEntity) currentTarget, aimPoint.get());
-      engine.aim(aim, turnSpeed.get(), speed.get(), smoothness.get(), wobble.get(), aimMode.get());
+      if (perfectCentering.get()) {
+         Vec3d eye = mc.player.getEyePos();
+         double dx = aim.getX() - eye.getX();
+         double dz = aim.getZ() - eye.getZ();
+         double horiz = Math.sqrt(dx * dx + dz * dz);
+         if (horiz > 1.0E-4) {
+            double halfWidth = Math.max(0.1, currentTarget.getWidth() * 0.5);
+            double pull = Math.max(0.0, halfWidth - 0.08);
+            aim = aim.add(-dx / horiz * pull, 0.0, -dz / horiz * pull);
+         }
+      }
+      engine.aim(aim, turnSpeed.get(), speed.get(), smoothness.get(), jitter.get(), wobble.get(),
+            aimMode.get(), humanize.get());
    }
 
    private Entity findBestTarget() {
@@ -141,7 +162,7 @@ public class AimAssist extends Module {
             best = entity;
          }
       }
-      return best; 
+      return best;
    }
 
    private boolean withinRange(Entity entity) {
@@ -166,7 +187,7 @@ public class AimAssist extends Module {
       if (living instanceof ArmorStandEntity) {
          return false;
       }
-      if (living.isTeammate(mc.player)) {
+      if (teams.get() && living.isTeammate(mc.player)) {
          return false;
       }
       return CombatUtil.matchesTargetMode(living, targetMode.get());

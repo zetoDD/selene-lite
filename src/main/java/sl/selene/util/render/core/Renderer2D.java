@@ -18,7 +18,6 @@ import org.joml.Vector2d;
 import org.lwjgl.opengl.GL11;
 import sl.selene.util.render.backends.RenderBackend;
 import sl.selene.util.render.backends.gl.GlBackend;
-import sl.selene.util.render.backends.gl.GlassMoonRenderer;
 import sl.selene.util.render.math.MathHelper;
 import sl.selene.util.render.math.animation.anim2.Interpolator;
 import sl.selene.util.render.text.FontObject;
@@ -654,25 +653,6 @@ public final class Renderer2D {
             Math.max(1.0F, thickness)
          );
       }
-   }
-
-   public boolean logoGlass(int textureId, float x, float y, float w, float h, float globalAlpha) {
-      float alpha = clamp01(globalAlpha) * this.currentAlphaMultiplier();
-      if (textureId <= 0 || !(w > 0.0F) || !(h > 0.0F) || alpha <= 1.0E-4F) {
-         return false;
-      }
-      this.ensureFrame();
-      this.batcher.flush();
-      GlassMoonRenderer.BlurInfo blur = null;
-      if (this.backend instanceof GlBackend gl) {
-         blur = new GlassMoonRenderer.BlurInfo(
-               gl.getPreparedBlurTexture(),
-               gl.getPreparedBlurWidth(),
-               gl.getPreparedBlurHeight(),
-               gl.getPreparedBlurScaleX(),
-               gl.getPreparedBlurScaleY());
-      }
-      return GlassMoonRenderer.draw(textureId, blur, x, y, w, h, alpha, this.transformStack.current());
    }
 
    public void prepareBlur(float strength) {

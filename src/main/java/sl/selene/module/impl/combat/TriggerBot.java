@@ -50,15 +50,16 @@ public class TriggerBot extends Module {
    public static SliderSetting cooldownPercent = new SliderSetting("Cooldown (%)", 85.0F, 50.0F, 100.0F, 1.0F, false);
 
    public static ModeSetting targetMode = new ModeSetting(
-      "Target Mode", "Players", "Players", "Hostiles", "Mobs", "Everything");
+      "Target Mode", "Everything", "Players", "Hostiles", "Mobs", "Everything");
 
    public static ModeSetting weaponMode = new ModeSetting("Weapon", "Melee", "Any", "Sword", "Axe", "Melee");
 
-   public static BooleanSetting autoCrit = new BooleanSetting("Auto Crit", true);
    public static BooleanSetting hurtTime = new BooleanSetting("Hurt Time", true);
+   public static BooleanSetting teams = new BooleanSetting("Teams", false);
+   public static BooleanSetting crits = new BooleanSetting("Crits", true);
    public static BooleanSetting noInvisible = new BooleanSetting("No Invisible", true);
    public static BooleanSetting noCrystals = new BooleanSetting("No Crystals", true);
-   public static BooleanSetting noShields = new BooleanSetting("No Shields", false);
+   public static BooleanSetting noShields = new BooleanSetting("No Shields", true);
    public static BooleanSetting agc = new BooleanSetting("AGC", false);
    public static SliderSetting agcMargin = new SliderSetting("AGC Margin", 0.15F, 0.0F, 0.5F, 0.01F, false)
          .hidden(() -> !agc.get());
@@ -66,7 +67,6 @@ public class TriggerBot extends Module {
 
    private static final double CAST_PADDING = 0.2;
    private static final double AGC_MIN_CAP = 0.5;
-   private static final float CRIT_FALL_DISTANCE = 0.1F;
 
    private static final long CLICK_HOLD_MIN = 30L;
    private static final long CLICK_HOLD_SPREAD = 55L;
@@ -82,7 +82,7 @@ public class TriggerBot extends Module {
    public TriggerBot() {
       this.addSettings(new Setting[] {
          reach, reachVariance, reaction, reactionVariance, cooldownPercent, targetMode, weaponMode,
-         autoCrit, hurtTime, noInvisible, noCrystals, noShields, agc, agcMargin, fireMode
+         hurtTime, teams, crits, noInvisible, noCrystals, noShields, agc, agcMargin, fireMode
       });
    }
 
@@ -139,8 +139,8 @@ public class TriggerBot extends Module {
       }
 
       if (!mc.player.isOnGround() && !mc.player.isClimbing()) {
-         disarm();
-         if (!autoCrit.get() || mc.player.fallDistance <= CRIT_FALL_DISTANCE) {
+         if (crits.get() && !canLandCrit()) {
+            disarm();
             return;
          }
          this.trySwing(this.raycastTarget(this.rollReach()));
@@ -211,6 +211,14 @@ public class TriggerBot extends Module {
       }
    }
 
+   private boolean canLandCrit() {
+      return mc.player.fallDistance > 0.0F
+            && mc.player.getAttackCooldownProgress(0.5F) > 0.9F
+            && !mc.player.isTouchingWater()
+            && !mc.player.hasStatusEffect(net.minecraft.entity.effect.StatusEffects.BLINDNESS)
+            && !mc.player.hasVehicle();
+   }
+
    private EntityHitResult raycastTarget(double reach) {
       Vec3d eye = mc.player.getEyePos();
       Vec3d look = mc.player.getRotationVec(1.0F);
@@ -273,7 +281,7 @@ public class TriggerBot extends Module {
       if (living instanceof ArmorStandEntity) {
          return false;
       }
-      if (living.isTeammate(mc.player)) {
+      if (teams.get() && living.isTeammate(mc.player)) {
          return false;
       }
       if (living instanceof Tameable) {

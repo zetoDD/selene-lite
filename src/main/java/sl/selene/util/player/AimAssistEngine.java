@@ -13,16 +13,33 @@ public final class AimAssistEngine implements IMinecraft {
    public static final float DEADZONE = 0.6F;
 
    private long lastFrameNanos;
+   private double jitterPhase = Math.random() * Math.PI * 2.0;
    private double wobblePhase = Math.random() * Math.PI * 2.0;
+   private double jitterFreq = 9.0 + Math.random() * 5.0;
    private double wobbleFreq = 1.6 + Math.random() * 1.4;
+   private boolean reactionDone;
+   private long nextAssistAt;
+   private long pauseUntil;
 
    public void reset() {
       lastFrameNanos = 0L;
+      jitterPhase = Math.random() * Math.PI * 2.0;
       wobblePhase = Math.random() * Math.PI * 2.0;
+      jitterFreq = 9.0 + Math.random() * 5.0;
       wobbleFreq = 1.6 + Math.random() * 1.4;
+      reactionDone = false;
+      nextAssistAt = 0L;
+      pauseUntil = 0L;
    }
 
-   public void aim(Vec3d aim, float turnSpeed, float speed, float smoothness, float wobble, String aimMode) {
+   public void resetReaction() {
+      reactionDone = false;
+      nextAssistAt = 0L;
+      pauseUntil = 0L;
+   }
+
+   public void aim(Vec3d aim, float turnSpeed, float speed, float smoothness, float jitter, float wobble,
+                   String aimMode, boolean humanize) {
       if (mc.player == null || mc.world == null) {
          return;
       }
@@ -55,6 +72,23 @@ public final class AimAssistEngine implements IMinecraft {
          return;
       }
 
+      if (humanize) {
+         if (!this.reactionDone) {
+            this.reactionDone = true;
+            this.nextAssistAt = now + (long) (40L + Math.random() * 120L) * 1_000_000L;
+         }
+         if (now < this.nextAssistAt) {
+            return;
+         }
+         if (now < this.pauseUntil) {
+            return;
+         }
+         if (Math.random() < 0.035) {
+            this.pauseUntil = now + (long) (30L + Math.random() * 90L) * 1_000_000L;
+            return;
+         }
+      }
+
       float maxStep = Math.max(0.05F, turnSpeed * delta);
 
       float yawStep;
@@ -82,8 +116,23 @@ public final class AimAssistEngine implements IMinecraft {
          }
       }
 
+      if (humanize) {
+         float humanVar = 0.8F + (float) Math.random() * 0.45F;
+         yawStep *= humanVar;
+         pitchStep *= humanVar;
+      }
+
       yawStep = MathHelper.clamp(yawStep, -maxStep, maxStep);
       pitchStep = MathHelper.clamp(pitchStep, -maxStep, maxStep);
+
+      float jitterAmount = jitter;
+      if (jitterAmount > 0.0F && !"Instant".equals(aimMode)) {
+         this.jitterPhase += this.jitterFreq * delta;
+         float jy = (float) Math.sin(this.jitterPhase) * jitterAmount * delta * 4.0F;
+         float jp = (float) Math.sin(this.jitterPhase * 1.7 + 1.3) * jitterAmount * delta * 4.0F;
+         yawStep = MathHelper.clamp(yawStep + jy, -maxStep, maxStep);
+         pitchStep = MathHelper.clamp(pitchStep + jp, -maxStep, maxStep);
+      }
 
       double sens = (Double) mc.options.getMouseSensitivity().getValue();
       double d = sens * 0.6D + 0.2D;

@@ -10,7 +10,6 @@ import sl.selene.util.color.ColorUtil;
 import sl.selene.util.render.animation.util.Easings;
 import sl.selene.util.render.core.Renderer2D;
 import sl.selene.util.render.text.FontRegistry;
-import sl.selene.util.render.texture.TextureLoader;
 import sl.selene.util.render.ui.UiIcons;
 
 @Environment(EnvType.CLIENT)
@@ -103,20 +102,5 @@ public class GuiRenderLeftPanel extends GuiScreen {
          downY += 22.0F;
       }
 
-      float logoSize = 18.0F;
-      float logoX = GuiScreen.x + (GuiScreen.SIDEBAR_WIDTH - GuiScreen.GAP) / 2.0F - logoSize / 2.0F;
-      float logoY = GuiScreen.y + 225.0F - logoSize / 2.0F;
-      int logoTexture = TextureLoader.loadBase64White("assets/selene/logo.png.b64");
-      if (logoTexture > 0) {
-
-         renderer2D.logoGlass(logoTexture, logoX, logoY, logoSize, logoSize, mainAlpha);
-      } else {
-         float logoCx = logoX + logoSize / 2.0F;
-         float logoCy = logoY + logoSize / 2.0F;
-         renderer2D.circle(logoCx, logoCy, logoSize * 0.28F, 0.0F, 1.0F,
-               Renderer2D.ColorUtil.rgba(255, 255, 255, (int)(255.0F * mainAlpha)));
-         renderer2D.circle(logoCx, logoCy, logoSize * 0.17F, 0.0F, 1.0F,
-               Renderer2D.ColorUtil.replAlpha(Renderer2D.ColorUtil.getBackGroundColor(1, 1), (int)(210.0F * mainAlpha)));
-      }
    }
 }

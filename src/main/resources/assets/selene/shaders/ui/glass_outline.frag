@@ -50,7 +50,7 @@ float outlineAlpha(vec2 coord, vec2 size, vec4 radius, float thickness, float sm
     return clamp(outer - inner, 0.0, 1.0);
 }
 
-    // Outward-pointing surface normal from the SDF gradient (central differences).
+    
 vec2 sdfNormal(vec2 p, vec2 halfSize, vec4 radius) {
     float eps = 1.0;
     vec2 g = vec2(
@@ -83,12 +83,12 @@ void main() {
     vec2 pos = center - coord * size;
     vec2 normal = sdfNormal(pos, halfSize, vRadii);
 
-    // Backdrop refracted tint so the edge reads as part of the glass body.
+    
     vec2 uv = clamp(vPosPx * uBlurScale + uBlurOffset, 0.0, 1.0);
     vec3 bg = texture(uBlur, uv).rgb;
 
-    // Thin directional highlight: only where the border faces the single light source.
-    vec2 lightDir = normalize(vec2(-0.45, -0.9)); // up-left, pixel space (y down)
+    
+    vec2 lightDir = normalize(vec2(-0.45, -0.9)); 
     float facing = clamp(dot(normal, -lightDir), 0.0, 1.0);
     float rim = pow(facing, 2.4) * clamp(fresnelMix * 0.7, 0.0, 0.35);
 

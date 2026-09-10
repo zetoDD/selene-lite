@@ -1,11 +1,11 @@
 #version 330 core
 
-// Temporal accumulation + directional smear for the GUI motion blur layer.
-//
-// uCurrent and uHistory both hold premultiplied-alpha colour, so mix() between
-// them is a correct composite. Chromatic fringing samples r/g/b at slightly
-// different smear lengths inside the same loop: 3 fetches per tap when it is
-// enabled, 1 fetch per tap when it is not.
+
+
+
+
+
+
 
 in vec2 vUv;
 out vec4 FragColor;
@@ -13,13 +13,13 @@ out vec4 FragColor;
 uniform sampler2D uCurrent;
 uniform sampler2D uHistory;
 
-// Per-frame movement of the UI layer, in UV units.
+
 uniform vec2 uVelocity;
-// Weight of the current frame. 1.0 == no temporal trail.
+
 uniform float uMix;
-// Directional smear tap count. 1 disables the smear entirely.
+
 uniform int uSamples;
-// Per-channel smear-length offset. 0 disables chromatic fringing.
+
 uniform float uChroma;
 
 const int MAX_SAMPLES = 12;
