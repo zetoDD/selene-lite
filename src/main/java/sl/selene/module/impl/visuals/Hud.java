@@ -121,7 +121,7 @@ public class Hud extends Module {
             }
 
             if (element.get("Potion List")) {
-               HudEditor.renderElement("potions", r2, () -> PotionsHUD.potions(r2, e.drawContext()));
+               HudEditor.renderElement("potions", r2, () -> PotionsHUD.potions(r2));
             }
 
             if (element.get("Hotbar")) {

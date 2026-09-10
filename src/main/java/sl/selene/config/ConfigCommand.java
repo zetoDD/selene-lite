@@ -1,6 +1,7 @@
 package sl.selene.config;
 
 import java.awt.Desktop;
+import java.io.File;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -168,18 +169,37 @@ public final class ConfigCommand implements Command {
    }
 
    private void handleOpenDir(CommandContext context) {
-      String path = ConfigManager.configDirectory.getAbsolutePath();
+      File folder = ConfigManager.configDirectory;
+      String path = folder.getAbsolutePath();
       boolean opened = false;
 
       try {
+         if (!folder.exists()) {
+            folder.mkdirs();
+         }
          if (Desktop.isDesktopSupported()) {
             Desktop desktop = Desktop.getDesktop();
             if (desktop.isSupported(Desktop.Action.OPEN)) {
-               desktop.open(ConfigManager.configDirectory);
+               desktop.open(folder);
                opened = true;
             }
          }
       } catch (Exception ignored) {
+      }
+
+      if (!opened) {
+         String os = System.getProperty("os.name", "").toLowerCase(Locale.ROOT);
+         try {
+            if (os.contains("win")) {
+               new ProcessBuilder("explorer.exe", path).start();
+            } else if (os.contains("mac")) {
+               new ProcessBuilder("open", path).start();
+            } else {
+               new ProcessBuilder("xdg-open", path).start();
+            }
+            opened = true;
+         } catch (Exception ignored) {
+         }
       }
 
       if (opened) {

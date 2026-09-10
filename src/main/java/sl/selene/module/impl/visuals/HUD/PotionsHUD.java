@@ -10,14 +10,9 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.client.texture.MissingSprite;
-import net.minecraft.client.gl.RenderPipelines;
 import net.minecraft.entity.effect.StatusEffect;
 import net.minecraft.entity.effect.StatusEffectInstance;
-import net.minecraft.util.Identifier;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.registry.RegistryKey;
 import net.minecraft.registry.entry.RegistryEntry;
 import sl.selene.module.impl.visuals.HUD.HudEditor;
 import sl.selene.ui.draggable.DraggableManager;
@@ -36,8 +31,6 @@ public class PotionsHUD {
    private static final float ROW_H = 30.0F;
    private static final float ROW_GAP = 4.0F;
    private static final float PAD_X = 7.0F;
-   private static final float ICON_SIZE = 18.0F;
-   private static final float ICON_TEXT_GAP = 6.0F;
    private static final float TEXT_PAD = 8.0F;
    private static final float NAME_SIZE = 14.0F;
    private static final float DUR_SIZE = 11.0F;
@@ -51,12 +44,11 @@ public class PotionsHUD {
    private static final Map<RegistryEntry<StatusEffect>, Animation2> animatedAlphas = new HashMap<>();
    private static final Map<RegistryEntry<StatusEffect>, StatusEffectInstance> cachedEffects = new HashMap<>();
 
-   public static void potions(Renderer2D r2, DrawContext drawContext) {
+   public static void potions(Renderer2D r2) {
       new ScaledResolution(mc);
       if (mc.player == null) {
          return;
       }
-      float hudScale = HudEditor.getScale("potions");
       Set<RegistryEntry<StatusEffect>> activeEffects = mc.player
             .getStatusEffects()
             .stream()
@@ -150,32 +142,7 @@ public class PotionsHUD {
          r2.pushAlpha(currentAlpha);
          GlassStyle.card(r2, x + x3, currentAnimatedY, rowW, ROW_H, 1.0F);
 
-         Identifier effectTexture = getEffectTexture(effect.getEffectType());
-         float iconX = x + x3 + PAD_X;
-         float iconY = rowCenterY - ICON_SIZE * 0.5F;
-         float guiScale = mc.getWindow() != null ? (float) mc.getWindow().getScaleFactor() : 1.0F;
-         float scaleOriginX = HudEditor.getOriginX("potions");
-         float scaleOriginY = HudEditor.getOriginY("potions");
-         if (scaleOriginX == 0.0F && scaleOriginY == 0.0F) {
-            scaleOriginX = x;
-            scaleOriginY = y;
-         }
-         float scaledOriginX = scaleOriginX / guiScale;
-         float scaledOriginY = scaleOriginY / guiScale;
-         drawContext.getMatrices().pushMatrix();
-         drawContext.getMatrices().translate(scaledOriginX, scaledOriginY);
-         drawContext.getMatrices().scale(hudScale, hudScale);
-         drawContext.getMatrices().translate(-scaledOriginX, -scaledOriginY);
-         drawContext.drawGuiTexture(
-               RenderPipelines.GUI_TEXTURED,
-               effectTexture,
-               Math.round(iconX / guiScale),
-               Math.round(iconY / guiScale),
-               (int) ICON_SIZE,
-               (int) ICON_SIZE);
-         drawContext.getMatrices().popMatrix();
-
-         float textX = x + x3 + PAD_X + ICON_SIZE + ICON_TEXT_GAP;
+         float textX = x + x3 + PAD_X;
          int nameCodepoint = name.codePointAt(0);
          float nameBaseline = rowCenterY
                + FontRegistry.centeredBaselineOffset(FontRegistry.INTER_MEDIUM, nameCodepoint, NAME_SIZE);
@@ -229,7 +196,7 @@ public class PotionsHUD {
    private static float rowWidth(Renderer2D r2, String name, String duration) {
       float nameW = r2.measureText(FontRegistry.INTER_MEDIUM, name, NAME_SIZE).width;
       float durW = r2.measureText(FontRegistry.INTER_MEDIUM, duration, DUR_SIZE).width;
-      return PAD_X + ICON_SIZE + ICON_TEXT_GAP + nameW + TEXT_PAD + durW + TEXT_PAD;
+      return PAD_X + nameW + TEXT_PAD + durW + TEXT_PAD;
    }
 
    private static String formatName(StatusEffectInstance effect) {
@@ -261,8 +228,4 @@ public class PotionsHUD {
       return minutes + ":" + (seconds < 10 ? "0" : "") + seconds;
    }
 
-   private static Identifier getEffectTexture(RegistryEntry<StatusEffect> effect) {
-      return effect.getKey().<Identifier>map(RegistryKey::getValue).map(id -> id.withPrefixedPath("mob_effect/"))
-            .orElseGet(MissingSprite::getMissingSpriteId);
-   }
 }

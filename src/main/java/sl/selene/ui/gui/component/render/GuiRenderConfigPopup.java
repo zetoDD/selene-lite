@@ -1,8 +1,10 @@
 package sl.selene.ui.gui.component.render;
 
 import java.awt.Desktop;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.util.math.MatrixStack;
@@ -343,21 +345,40 @@ public final class GuiRenderConfigPopup extends GuiScreen {
    }
 
    private static void openConfigFolder() {
+      File folder = ConfigManager.configDirectory;
       boolean opened = false;
       try {
+         if (!folder.exists()) {
+            folder.mkdirs();
+         }
          if (Desktop.isDesktopSupported()) {
             Desktop desktop = Desktop.getDesktop();
             if (desktop.isSupported(Desktop.Action.OPEN)) {
-               desktop.open(ConfigManager.configDirectory);
+               desktop.open(folder);
                opened = true;
             }
          }
       } catch (Exception ignored) {
       }
+      if (!opened) {
+         String os = System.getProperty("os.name", "").toLowerCase(Locale.ROOT);
+         try {
+            String path = folder.getAbsolutePath();
+            if (os.contains("win")) {
+               new ProcessBuilder("explorer.exe", path).start();
+            } else if (os.contains("mac")) {
+               new ProcessBuilder("open", path).start();
+            } else {
+               new ProcessBuilder("xdg-open", path).start();
+            }
+            opened = true;
+         } catch (Exception ignored) {
+         }
+      }
       if (opened) {
          setStatus("Opened config folder");
       } else {
-         setStatus(ConfigManager.configDirectory.getAbsolutePath());
+         setStatus(folder.getAbsolutePath());
       }
    }
 

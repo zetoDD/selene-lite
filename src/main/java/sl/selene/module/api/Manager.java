@@ -26,7 +26,6 @@ import sl.selene.module.impl.visuals.CustomHitbox;
 import sl.selene.module.impl.visuals.ShulkerPreview;
 import sl.selene.module.impl.visuals.FullBright;
 import sl.selene.module.impl.visuals.Projectile;
-import sl.selene.module.impl.misc.ItemScroller;
 import sl.selene.module.impl.utils.Optimizer;
 import sl.selene.module.impl.utils.Zoom;
 import sl.selene.module.impl.donut.Freecam;
@@ -55,7 +54,6 @@ public class Manager {
       this.module.add(new Crosshair());
       this.module.add(new CustomHitbox());
       this.module.add(new ShulkerPreview());
-      this.module.add(new ItemScroller());
       this.module.add(new Optimizer());
       this.module.add(new Zoom());
       this.module.add(new Freecam());

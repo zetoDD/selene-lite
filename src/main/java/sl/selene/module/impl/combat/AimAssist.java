@@ -37,8 +37,6 @@ public class AimAssist extends Module {
 
    public static SliderSetting smoothness = new SliderSetting("Smoothness", 6.0F, 1.0F, 16.0F, 0.5F, false);
 
-   public static SliderSetting jitter = new SliderSetting("Jitter", 0.3F, 0.0F, 3.0F, 0.05F, false);
-
    public static SliderSetting wobble = new SliderSetting("Wobble", 0.1F, 0.0F, 0.5F, 0.01F, false);
    public static ModeSetting aimPoint = new ModeSetting("Aim Point", "Chest", "Chest", "Head", "Feet");
    public static ModeSetting aimMode = new ModeSetting("Aim Mode", "Wind", "Wind", "Smooth", "Instant");
@@ -53,16 +51,14 @@ public class AimAssist extends Module {
    public static ModeSetting weaponMode = new ModeSetting("Weapon", "Melee", "Any", "Sword", "Axe", "Melee");
    public static BooleanSetting throughWalls = new BooleanSetting("Through Walls", false);
 
-   public static BooleanSetting humanize = new BooleanSetting("Humanize", true);
-
    private final AimAssistEngine engine = new AimAssistEngine();
 
    private Entity currentTarget;
 
    public AimAssist() {
       this.addSettings(new Setting[] {
-         range, fov, turnSpeed, speed, smoothness, jitter, wobble,
-         aimPoint, aimMode, perfectCentering, teams, targetMode, weaponMode, throughWalls, humanize
+         range, fov, turnSpeed, speed, smoothness, wobble,
+         aimPoint, aimMode, perfectCentering, teams, targetMode, weaponMode, throughWalls
       });
    }
 
@@ -93,7 +89,6 @@ public class AimAssist extends Module {
       Entity newTarget = findBestTarget();
       if (newTarget != currentTarget) {
          currentTarget = newTarget;
-         engine.resetReaction();
       }
    }
 
@@ -128,8 +123,8 @@ public class AimAssist extends Module {
             aim = aim.add(-dx / horiz * pull, 0.0, -dz / horiz * pull);
          }
       }
-      engine.aim(aim, turnSpeed.get(), speed.get(), smoothness.get(), jitter.get(), wobble.get(),
-            aimMode.get(), humanize.get());
+      engine.aim(aim, turnSpeed.get(), speed.get(), smoothness.get(), wobble.get(),
+            aimMode.get());
    }
 
    private Entity findBestTarget() {
