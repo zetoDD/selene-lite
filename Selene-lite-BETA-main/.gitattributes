@@ -1,0 +1,31 @@
+* text=auto eol=lf
+
+# Keep Windows scripts in CRLF
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Linux/macOS scripts
+*.sh text eol=lf
+
+# Source and config files as LF
+*.java text eol=lf
+*.kt text eol=lf
+*.kts text eol=lf
+*.gradle text eol=lf
+*.properties text eol=lf
+*.json text eol=lf
+*.json5 text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.toml text eol=lf
+*.xml text eol=lf
+*.md text eol=lf
+
+# Binary assets
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.jar binary
+*.zip binary

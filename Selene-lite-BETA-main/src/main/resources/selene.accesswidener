@@ -1,0 +1,20 @@
+accessWidener v1 named
+#accessible class net/minecraft/client/render/RenderLayer$MultiPhaseParameters
+#accessible class net/minecraft/client/render/RenderLayer$MultiPhase
+#accessible method net/minecraft/client/render/RenderLayer$MultiPhaseParameters builder ()Lnet/minecraft/client/render/RenderLayer$MultiPhaseParameters$Builder;
+#accessible class net/minecraft/client/render/RenderLayer$MultiPhaseParameters$Builder
+#accessible method net/minecraft/client/render/RenderLayer$MultiPhaseParameters$Builder build (Z)Lnet/minecraft/client/render/RenderLayer$MultiPhaseParameters;
+#accessible method net/minecraft/client/render/RenderLayer$MultiPhaseParameters$Builder texture (Lnet/minecraft/client/render/RenderPhase$TextureBase;)Lnet/minecraft/client/render/RenderLayer$MultiPhaseParameters$Builder;
+#accessible method net/minecraft/client/render/RenderLayer$MultiPhaseParameters$Builder lineWidth (Lnet/minecraft/client/render/RenderPhase$LineWidth;)Lnet/minecraft/client/render/RenderLayer$MultiPhaseParameters$Builder;
+#accessible class net/minecraft/client/render/RenderPhase$LineWidth
+#accessible method net/minecraft/client/render/RenderPhase$LineWidth <init> (Ljava/util/OptionalDouble;)V
+#accessible class net/minecraft/client/render/RenderPhase$Texture
+#accessible class net/minecraft/client/render/RenderPhase$TextureBase
+accessible method net/minecraft/client/gl/RenderPipelines register (Lcom/mojang/blaze3d/pipeline/RenderPipeline;)Lcom/mojang/blaze3d/pipeline/RenderPipeline;
+accessible field net/minecraft/client/gl/RenderPipelines POSITION_COLOR_SNIPPET Lcom/mojang/blaze3d/pipeline/RenderPipeline$Snippet;
+accessible field net/minecraft/client/gl/RenderPipelines POSITION_TEX_COLOR_SNIPPET Lcom/mojang/blaze3d/pipeline/RenderPipeline$Snippet;
+accessible field net/minecraft/client/gl/RenderPipelines RENDERTYPE_LINES_SNIPPET Lcom/mojang/blaze3d/pipeline/RenderPipeline$Snippet;
+accessible method net/minecraft/entity/decoration/DisplayEntity$TextDisplayEntity getText ()Lnet/minecraft/text/Text;
+#accessible method net/minecraft/client/render/RenderLayer of (Ljava/lang/String;IZZLcom/mojang/blaze3d/pipeline/RenderPipeline;Lnet/minecraft/client/render/RenderLayer$MultiPhaseParameters;)Lnet/minecraft/client/render/RenderLayer$MultiPhase;
+accessible field net/minecraft/entity/LivingEntity bodyYaw F
+accessible field net/minecraft/entity/LivingEntity lastBodyYaw F

@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 1,
+  "id": "selene",
+  "version": "${version}",
+  "name": "Selene",
+  "description": "Selene client",
+  "authors": [
+    "mooncode2"
+  ],
+  "contact": {
+    "homepage": "",
+    "issues": ""
+  },
+  "license": "GNU GENERAL PUBLIC LICENSE v3",
+  "icon": "assets/selene/selene.png",
+  "environment": "client",
+  "entrypoints": {
+    "client": [
+      "sl.selene.Selene"
+    ]
+  },
+  "mixins": [
+    "selene.mixins.json"
+  ],
+  "accessWidener": "selene.accesswidener",
+  "depends": {
+    "fabricloader": ">=0.17.2",
+    "minecraft": "~1.21.11",
+    "fabric-api": "*"
+  },
+  "custom": {
+    "modmenu": {
+      "links": {
+        "GitHub": "https://github.com/mooncode2/SeleneVisual"
+      }
+    }
+  }
+}
