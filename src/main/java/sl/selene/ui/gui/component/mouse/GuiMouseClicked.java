@@ -7,9 +7,10 @@ import sl.selene.ui.gui.component.mouse.category.GuiMouseClickedCategory;
 import sl.selene.ui.gui.component.mouse.colorpicker.GuiMouseClickedColorPicker;
 import sl.selene.ui.gui.component.mouse.module.GuiMouseClickedModule;
 import sl.selene.ui.gui.map.GuiServerMapPanel;
-import sl.selene.ui.gui.component.render.GuiRenderConfigPopup;
+import sl.selene.ui.gui.component.render.GuiRenderConfigPanel;
 import sl.selene.ui.gui.component.render.GuiRenderMain;
 import sl.selene.ui.gui.component.render.GuiRenderSettings;
+import sl.selene.ui.gui.component.render.GuiRenderUpPanel;
 import sl.selene.util.render.core.Renderer2D;
 import sl.selene.util.render.math.ScaleHelper;
 import sl.selene.util.render.math.ScaledResolution;
@@ -28,46 +29,26 @@ public class GuiMouseClicked extends GuiScreen {
       GuiScreen.x = Math.max(0.0F, Math.min(maxWindowX, GuiScreen.x));
       GuiScreen.y = Math.max(0.0F, Math.min(maxWindowY, GuiScreen.y));
       if (!GuiScreen.exit) {
-         float groupStart = (GuiScreen.SIDEBAR_WIDTH + GuiScreen.width) * 0.5F - 100.0F;
-         float islandY = GuiScreen.y + 21.0F;
-         float islandH = 20.0F;
-         float pillW = 62.0F;
-         float pillH = 19.0F;
-         float pillX = GuiScreen.x + groupStart + 100.0F - pillW * 0.5F;
-         float pillY = GuiScreen.y + 0.5F;
+         float islandY = GuiRenderUpPanel.islandY();
+         float islandH = GuiRenderUpPanel.islandHeight();
 
-         if (pButton == 0 && GuiRenderMain.isHovered(contentMouseX, contentMouseY, pillX, pillY, pillW, pillH)) {
-            GuiScreen.configPopupOpen = !GuiScreen.configPopupOpen;
-            GuiScreen.activeSearch = false;
-            GuiScreen.searchText = "";
-            if (GuiScreen.configPopupOpen) {
-               GuiScreen.configInputActive = true;
-            } else {
-               GuiScreen.configInputActive = false;
-               GuiScreen.configDeleteArmed = false;
-            }
-            return true;
-         }
-
-         if (GuiScreen.configPopupOpen && pButton == 0
-               && GuiRenderConfigPopup.beginDrag(contentMouseX, contentMouseY)) {
-            return true;
-         }
-
-         if (GuiScreen.configPopupOpen) {
-            if (GuiRenderConfigPopup.isMouseOver(contentMouseX, contentMouseY)) {
-               if (GuiRenderConfigPopup.mouseClicked(contentMouseX, contentMouseY, pButton)) {
+         if (!GuiScreen.serverMapOpen && pButton == 0) {
+            for (int i = 0; i < GuiScreen.TAB_COUNT; i++) {
+               if (GuiRenderMain.isHovered(contentMouseX, contentMouseY, GuiRenderUpPanel.tabX(i),
+                     GuiRenderUpPanel.tabY(), GuiRenderUpPanel.TAB_SIZE, GuiRenderUpPanel.TAB_SIZE)) {
+                  GuiScreen.selectTab(i);
                   return true;
                }
-            } else {
-               GuiScreen.configPopupOpen = false;
-               GuiScreen.configInputActive = false;
-               GuiScreen.configDeleteArmed = false;
+            }
+
+            if (GuiRenderUpPanel.isOverTabBar(contentMouseX, contentMouseY)) {
+               return true;
             }
          }
 
-         float searchX = GuiScreen.x + groupStart + 30.0F;
-         if (!GuiScreen.settingsPageOpen && pButton == 0 && GuiRenderMain.isHovered(contentMouseX, contentMouseY, searchX, islandY, 140.0F, islandH)) {
+         if (GuiScreen.selectedTab == GuiScreen.TAB_MODULES && pButton == 0
+               && GuiRenderMain.isHovered(contentMouseX, contentMouseY, GuiRenderUpPanel.searchIslandX(), islandY,
+                     GuiRenderUpPanel.searchIslandWidth(), islandH)) {
             GuiScreen.activeSearch = true;
             return true;
          }
@@ -81,44 +62,36 @@ public class GuiMouseClicked extends GuiScreen {
             return true;
          }
 
-         float settingsButtonX = GuiScreen.x + groupStart;
-         if (pButton == 0 && GuiRenderMain.isHovered(contentMouseX, contentMouseY, settingsButtonX, islandY, 24.0F, islandH)) {
-            GuiScreen.settingsPageOpen = !GuiScreen.settingsPageOpen;
-            GuiScreen.activeSearch = false;
-            GuiScreen.searchText = "";
-            if (!GuiScreen.settingsPageOpen) {
-               GuiScreen.configInputActive = false;
-            }
-            return true;
-         }
-
-         float closeButtonX = GuiScreen.x + groupStart + 176.0F;
-         if (pButton == 0 && GuiRenderMain.isHovered(contentMouseX, contentMouseY, closeButtonX, islandY, 24.0F, islandH)) {
+         if (pButton == 0 && GuiRenderMain.isHovered(contentMouseX, contentMouseY, GuiRenderUpPanel.closeIslandX(),
+               islandY, GuiRenderUpPanel.closeIslandWidth(), islandH)) {
             GuiScreen.alphaPC.run(0.0, 0.4F, sl.selene.util.render.math.animation.anim.util.Easings.CIRC_OUT);
             GuiScreen.exit = true;
             return true;
          }
 
-         if (GuiScreen.settingsPageOpen) {
-            boolean consumed = GuiRenderSettings.mouseClicked(renderer2D, contentMouseX, contentMouseY, pButton);
-            if (!consumed && pButton == 0 && insideWindow(contentMouseX, contentMouseY)) {
-               startWindowDrag(contentMouseX, contentMouseY);
+         if (GuiScreen.selectedTab == GuiScreen.TAB_SETTINGS) {
+            GuiRenderSettings.mouseClicked(renderer2D, contentMouseX, contentMouseY, pButton);
+            return true;
+         }
+
+         if (GuiScreen.selectedTab == GuiScreen.TAB_CONFIG) {
+            if (GuiRenderConfigPanel.mouseClicked(contentMouseX, contentMouseY, pButton)) {
+               return true;
             }
-            return true;
-         }
+         } else {
+            GuiMouseClickedCategory.mouseClickedCategory(contentMouseX, contentMouseY);
 
-         GuiMouseClickedCategory.mouseClickedCategory(contentMouseX, contentMouseY);
+            if (GuiMouseClickedColorPicker.mouseClickedColorPicker(contentMouseX, contentMouseY, pButton)) {
+               return true;
+            }
 
-         if (GuiMouseClickedColorPicker.mouseClickedColorPicker(contentMouseX, contentMouseY, pButton)) {
-            return true;
-         }
+            if (GuiScreen.getScrollUtil().handleScrollbarClick(contentMouseX, contentMouseY, pButton)) {
+               return true;
+            }
 
-         if (GuiScreen.getScrollUtil().handleScrollbarClick(contentMouseX, contentMouseY, pButton)) {
-            return true;
-         }
-
-         if (GuiMouseClickedModule.mouseClickedModule(renderer2D, contentMouseX, contentMouseY, pButton)) {
-            return true;
+            if (GuiMouseClickedModule.mouseClickedModule(renderer2D, contentMouseX, contentMouseY, pButton)) {
+               return true;
+            }
          }
 
       }

@@ -96,6 +96,10 @@ public final class Config implements ConfigUpdater {
                module.enable = false;
                EventManager.unregister(module);
             }
+
+            if (module.isEnabledByDefault()) {
+               module.setState(true);
+            }
          }
 
          for (Module module : Selene.get.manager.module) {

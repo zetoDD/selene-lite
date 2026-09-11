@@ -33,6 +33,7 @@ public class ScrollUtil {
     private static final float RUBBER_DIM = 48.0F;
     private static final float RUBBER_CONSTANT = 0.55F;
     private static final float RUBBER_RETURN = 0.18F;
+    private static final float HIT_SLOP = 2.0F;
 
     public static ScaledResolution getScaledResolution() {
         if (sr == null) {
@@ -270,9 +271,9 @@ public class ScrollUtil {
     }
 
     public void render(Renderer2D renderer2D, float x, float y, float width, float height, float alpha) {
-        this.trackX = x;
+        this.trackX = x - HIT_SLOP;
         this.trackY = y;
-        this.trackWidth = width;
+        this.trackWidth = width + HIT_SLOP * 2.0F;
         this.trackHeight = height;
         if (!(this.getMax() >= 0.0F)) {
             float percentage = this.getMax() != 0.0F ? this.getScroll() / this.getMax() : 0.0F;
@@ -287,7 +288,7 @@ public class ScrollUtil {
                 int mainColor20 = Renderer2D.ColorUtil.replAlpha(Renderer2D.ColorUtil.getMainColor(1, 1),
                     (int) MathHelper.clamp(20.0F * alpha, 0.0F, 20.0F));
                 renderer2D.rect(x, y, width, height, mainColor20);
-                renderer2D.rect(x, scrollY, width, this.barHeight, 1.0F, mainColor);
+                renderer2D.rect(x, scrollY, width, this.barHeight, width * 0.5F, mainColor);
             }
         }
     }

@@ -64,7 +64,8 @@ public interface SettingValueAccessor<T> {
 
             public void set(Double value) {
                if (value != null) {
-                  sliderSetting.current = value.floatValue();
+                  float clamped = Math.max(sliderSetting.minimum, Math.min(sliderSetting.maximum, value.floatValue()));
+                  sliderSetting.current = clamped;
                   SettingValueAccessor.autoSaveConfig();
                }
             }

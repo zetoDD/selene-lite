@@ -19,9 +19,9 @@ import sl.selene.ui.draggable.DraggableManager;
 import sl.selene.ui.gui.component.render.GlassStyle;
 import sl.selene.util.render.core.Renderer2D;
 import sl.selene.util.render.math.ScaledResolution;
-import sl.selene.util.render.math.animation.AnimationMath;
 import sl.selene.util.render.math.animation.anim.util.Animation2;
 import sl.selene.util.render.math.animation.anim.util.Easings;
+import sl.selene.util.render.motion.Motion;
 import sl.selene.util.render.text.FontRegistry;
 
 @Environment(EnvType.CLIENT)
@@ -120,7 +120,7 @@ public class PotionsHUD {
          float x3 = -80.0F + 80.0F * currentAlpha;
          float targetY = y + offset;
          float currentAnimatedY = animatedY.getOrDefault(effectType, targetY);
-         currentAnimatedY = AnimationMath.animation(currentAnimatedY, targetY, 0.1F);
+         currentAnimatedY = Motion.smooth(currentAnimatedY, targetY, Motion.BAR_SPEED);
          animatedY.put(effectType, currentAnimatedY);
          offset += (ROW_H + ROW_GAP) * currentAlpha;
          if (currentAlpha <= 0.01F) {
@@ -162,7 +162,7 @@ public class PotionsHUD {
          float progress = maxDuration > 0 ? Math.max(0.0F, Math.min(1.0F, (float) currentDuration / maxDuration)) : 0.0F;
          float targetWidth = (rowW - 2.0F * PAD_X) * progress;
          float currentAnimatedWidth = animatedWidths.getOrDefault(effectType, targetWidth);
-         currentAnimatedWidth = AnimationMath.animation(currentAnimatedWidth, targetWidth, 0.1F);
+         currentAnimatedWidth = Motion.smooth(currentAnimatedWidth, targetWidth, Motion.BAR_SPEED);
          animatedWidths.put(effectType, currentAnimatedWidth);
          float barY = currentAnimatedY + ROW_H - BAR_BOTTOM_OFFSET;
          int barTrack = Renderer2D.ColorUtil.replAlpha(Renderer2D.ColorUtil.getMainColor(1, 1), 46);

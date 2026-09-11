@@ -51,7 +51,7 @@ public class GuiManager {
          Properties props = new Properties();
          props.setProperty("category", this.currentCategory.name());
          props.setProperty("frostedGlass", Boolean.toString(GuiScreen.frostedGlass));
-         props.setProperty("plainArrayList", Boolean.toString(GuiScreen.plainArrayList));
+         props.setProperty("topBarAtBottom", Boolean.toString(GuiScreen.topBarAtBottom));
          props.store(writer, "GUI Settings");
       } catch (IOException var6) {
          var6.printStackTrace();
@@ -71,7 +71,7 @@ public class GuiManager {
          }
          this.currentCategory = Category.valueOf(savedCategory);
          GuiScreen.frostedGlass = Boolean.parseBoolean(props.getProperty("frostedGlass", "false"));
-         GuiScreen.plainArrayList = Boolean.parseBoolean(props.getProperty("plainArrayList", "true"));
+         GuiScreen.topBarAtBottom = Boolean.parseBoolean(props.getProperty("topBarAtBottom", "false"));
       } catch (IllegalArgumentException | IOException var6) {
          var6.printStackTrace();
       }

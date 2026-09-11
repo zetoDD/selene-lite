@@ -28,7 +28,7 @@ import sl.selene.util.render.animation.util.Animation;
 import sl.selene.util.render.animation.util.Easings;
 import sl.selene.util.render.core.Renderer2D;
 import sl.selene.util.render.math.ScaledResolution;
-import sl.selene.util.render.math.animation.AnimationMath;
+import sl.selene.util.render.motion.Motion;
 import sl.selene.util.render.text.FontRegistry;
 import sl.selene.util.render.ui.UiIcons;
 
@@ -115,10 +115,10 @@ public class TargetHUD {
       float hp = targetPlayer.getHealth();
       float abs = targetPlayer.getAbsorptionAmount();
       float barWidth = 105.0F;
-      animatedHealthWidth = AnimationMath.animation(animatedHealthWidth, Math.min(hp / maxHP * barWidth, barWidth),
-            0.3F);
-      animatedAbsorptionWidth = AnimationMath.animation(animatedAbsorptionWidth,
-            Math.min(abs / maxHP * barWidth, barWidth), 0.3F);
+      animatedHealthWidth = Motion.smooth(animatedHealthWidth, Math.min(hp / maxHP * barWidth, barWidth),
+            Motion.BAR_SPEED);
+      animatedAbsorptionWidth = Motion.smooth(animatedAbsorptionWidth,
+            Math.min(abs / maxHP * barWidth, barWidth), Motion.BAR_SPEED);
       r2.pushAlpha(alpha);
       r2.text(FontRegistry.INTER_MEDIUM, x + 74.0F, y + 22.0F, 28.0F, targetPlayer.getName().getString(), -1);
       String hpString = String.format("%.1f", hp + abs);
@@ -173,7 +173,7 @@ public class TargetHUD {
       String name = entity instanceof CreeperEntity ? "Sad Creeper" : entity.getName().getString();
       r2.text(FontRegistry.INTER_MEDIUM, x + 74.0F, y + 22.0F, 28.0F, name, -1);
       float targetWidth = Math.min(entity.getHealth() / entity.getMaxHealth() * 105.0F, 105.0F);
-      animatedEntityHealthWidth = AnimationMath.animation(animatedEntityHealthWidth, targetWidth, 0.3F);
+      animatedEntityHealthWidth = Motion.smooth(animatedEntityHealthWidth, targetWidth, Motion.BAR_SPEED);
       r2.rect(x + 74.0F, y + 48.0F, 105.0F, 5.0F, 4.0F,
             Renderer2D.ColorUtil.replAlpha(Renderer2D.ColorUtil.getMainColor(1, 1), 40));
       r2.rect(x + 74.0F, y + 48.0F, animatedEntityHealthWidth, 5.0F, 4.0F, Renderer2D.ColorUtil.getMainColor(1, 1));

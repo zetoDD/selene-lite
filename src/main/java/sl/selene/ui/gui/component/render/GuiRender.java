@@ -9,22 +9,31 @@ import sl.selene.module.api.Module;
 import sl.selene.ui.gui.GuiScreen;
 import sl.selene.ui.gui.map.GuiServerMapPanel;
 import sl.selene.util.render.core.Renderer2D;
-import sl.selene.util.render.math.ScaleHelper;
 import sl.selene.util.render.math.ScaledResolution;
+import sl.selene.util.render.motion.Motion;
 
 @Environment(EnvType.CLIENT)
 public class GuiRender extends GuiScreen {
 
-   public static void render(Renderer2D renderer2D, DrawContext p_281549_, int p_281550_, int p_282878_, float p_282465_) {
+   public static void render(Renderer2D renderer2D, DrawContext drawContext, int rawMouseX, int rawMouseY, float deltaTicks) {
+      Motion.beginFrame(deltaTicks);
       MinecraftClient client = MinecraftClient.getInstance();
       if (client != null && client.getWindow() != null) {
          int viewportWidth = client.getWindow().getFramebufferWidth();
          int viewportHeight = client.getWindow().getFramebufferHeight();
          if (viewportWidth > 0 && viewportHeight > 0) {
 
-            float[] mouseCoords = ScaleHelper.calc((float)p_281550_, (float)p_282878_);
-            int mouseX = (int)mouseCoords[0];
-            int mouseY = (int)mouseCoords[1];
+            ScaledResolution scaledRes = new ScaledResolution(client);
+            float scaledWidth = scaledRes.getWidth();
+            float scaledHeight = scaledRes.getHeight();
+            GuiScreen.screenWidth = scaledWidth;
+            GuiScreen.screenHeight = scaledHeight;
+            float renderScale = viewportWidth / scaledWidth;
+            GuiScreen.renderScale = renderScale > 0.0F ? renderScale : 1.0F;
+            int windowWidth = Math.max(1, client.getWindow().getWidth());
+            int windowHeight = Math.max(1, client.getWindow().getHeight());
+            int mouseX = (int)((float)rawMouseX * scaledWidth / windowWidth);
+            int mouseY = (int)((float)rawMouseY * scaledHeight / windowHeight);
             int contentMouseX = mouseX;
             int contentMouseY = mouseY;
             GuiScreen.currentMouseX = contentMouseX;
@@ -34,7 +43,9 @@ public class GuiRender extends GuiScreen {
             GuiScreen.alphaPC2.update();
             GuiScreen.alphaPC3.update();
             GuiScreen.openAnimation.update();
+            GuiScreen.contentAnimation.update();
             GuiScreen.updateSliderElastic();
+            GuiScreen.updateTabPress();
             GuiScreen.refreshCategoriesAndModules();
             if (GuiScreen.modules != null) {
                for (Module module : GuiScreen.modules) {
@@ -51,18 +62,11 @@ public class GuiRender extends GuiScreen {
                return;
             }
 
-            ScaledResolution scaledRes = new ScaledResolution(client);
-            float scaledWidth = scaledRes.getWidth();
-            float scaledHeight = scaledRes.getHeight();
-            float renderScale = viewportWidth / scaledWidth;
-            GuiScreen.renderScale = renderScale > 0.0F ? renderScale : 1.0F;
-
             float baseX = (scaledWidth - GuiScreen.width) / 2.0F;
             float baseY = (scaledHeight - GuiScreen.height) / 2.0F;
             float maxX = Math.max(0.0F, scaledWidth - GuiScreen.width);
-            float maxY = Math.max(0.0F, scaledHeight - GuiScreen.height);
             GuiScreen.x = Math.max(0.0F, Math.min(maxX, baseX + GuiScreen.windowOffsetX));
-            GuiScreen.y = Math.max(0.0F, Math.min(maxY, baseY + GuiScreen.windowOffsetY));
+            GuiScreen.y = GuiScreen.clampWindowY(baseY);
             MatrixStack pose = new MatrixStack();
 
             renderer2D.pushScale(GuiScreen.renderScale);
@@ -100,20 +104,39 @@ public class GuiRender extends GuiScreen {
                            GuiScreen.width - GuiScreen.SIDEBAR_WIDTH, GuiScreen.height - GuiScreen.CONTENT_TOP,
                            8.0F, 8.0F, 8.0F, 8.0F);
                      try {
-                        if (GuiScreen.settingsPageOpen) {
-                           GuiRenderSettings.render(renderer2D, pose, contentMouseX, contentMouseY, mainAlpha);
-                        } else {
-                           GuiRenderMain.renderMain(renderer2D, pose, contentMouseX, contentMouseY, mainAlpha * categoryAnimation.getOutput());
+                        float contentProgress = Math.max(0.0F, Math.min(1.0F, GuiScreen.contentAnimation.get()));
+                        float contentAlpha = 0.2F + 0.8F * contentProgress;
+                        float contentScale = 0.97F + 0.03F * contentProgress;
+                        float contentCenterX = GuiScreen.x + GuiScreen.SIDEBAR_WIDTH
+                              + (GuiScreen.width - GuiScreen.SIDEBAR_WIDTH) * 0.5F;
+                        float contentCenterY = GuiScreen.y + GuiScreen.CONTENT_TOP
+                              + (GuiScreen.height - GuiScreen.CONTENT_TOP) * 0.5F;
+                        renderer2D.pushAlpha(contentAlpha);
+                        renderer2D.pushTranslation(0.0F, 10.0F * (1.0F - contentProgress));
+                        renderer2D.pushScale(contentScale, contentScale, contentCenterX, contentCenterY);
+                        try {
+                           if (GuiScreen.selectedTab == GuiScreen.TAB_SETTINGS) {
+                              GuiRenderSettings.render(renderer2D, pose, contentMouseX, contentMouseY, mainAlpha);
+                           } else if (GuiScreen.selectedTab == GuiScreen.TAB_CONFIG) {
+                              GuiRenderConfigPanel.render(renderer2D, pose, contentMouseX, contentMouseY, mainAlpha);
+                           } else {
+                              GuiRenderMain.renderMain(renderer2D, pose, contentMouseX, contentMouseY, mainAlpha * categoryAnimation.getOutput());
+                           }
+                        } finally {
+                           renderer2D.popTransform();
+                           renderer2D.popTransform();
+                           renderer2D.popAlpha();
                         }
                      } finally {
                         renderer2D.popClipRect();
                      }
-                     if (GuiScreen.configPopupOpen) {
-                        GuiRenderConfigPopup.renderPopup(renderer2D, pose, contentMouseX, contentMouseY, mainAlpha);
-                     }
                   }
                } finally {
                   renderer2D.popTransform();
+               }
+
+               if (!GuiScreen.serverMapOpen) {
+                  GuiRenderUpPanel.renderTabBar(renderer2D, mainAlpha);
                }
             } finally {
                renderer2D.popTransform();

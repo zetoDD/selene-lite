@@ -2,6 +2,7 @@ package sl.selene.ui.gui.component.setting;
 
 import java.awt.Color;
 import java.util.HashMap;
+import java.util.List;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import sl.selene.module.api.setting.Setting;
@@ -21,8 +22,8 @@ import sl.selene.util.render.animation.util.Animation;
 import sl.selene.util.render.animation.util.Easings;
 import sl.selene.util.render.core.Renderer2D;
 import sl.selene.util.render.math.MathHelper;
-import sl.selene.util.render.math.animation.AnimationMath;
 import sl.selene.util.render.math.animation.anim.util.Animation2;
+import sl.selene.util.render.motion.Motion;
 import sl.selene.util.render.text.FontRegistry;
 import sl.selene.util.render.utils.KeyUtil;
 
@@ -33,6 +34,63 @@ public class GuiRenderSetting {
    public static HashMap<String, Float> animation2 = new HashMap<>();
    public static HashMap<MultiBooleanSetting, HashMap<String, Float>> multiBooleanAnimation = new HashMap<>();
 
+   private static final float MODE_CHIP_HEIGHT = 10.075F;
+   private static final float MODE_CHIP_SPACING = 2.0F;
+   private static final float MODE_CHIP_PADDING = 3.0F;
+   private static final float MODE_CHIP_VERTICAL_SPACING = -2.0F;
+   private static final float MULTI_BOOL_TOP = 10.0F;
+   private static final float MULTI_BOOL_CHIP_HEIGHT = 10.0F;
+   private static final float MULTI_BOOL_SPACING = 3.0F;
+   private static final float MULTI_BOOL_PADDING = 4.0F;
+
+   public static float getAnimatedSettingsHeight(Renderer2D renderer2D, List<Setting> moduleSettings, float settingsAnim, boolean expanded) {
+      if (!expanded) {
+         return GuiScreen.SETTINGS_COLLAPSED_HEIGHT;
+      }
+
+      float fullSettingsHeight = GuiScreen.SETTINGS_COLLAPSED_HEIGHT;
+      for (Setting setting : moduleSettings) {
+         fullSettingsHeight += getSettingHeight(renderer2D, setting) + 1.0F;
+      }
+
+      fullSettingsHeight = Math.max(fullSettingsHeight, 20.0F);
+      return GuiScreen.SETTINGS_COLLAPSED_HEIGHT
+         + (fullSettingsHeight - GuiScreen.SETTINGS_COLLAPSED_HEIGHT) * settingsAnim;
+   }
+
+   private static float measureModeChipRows(Renderer2D renderer2D, ModeSetting modeSetting) {
+      float calcX = MODE_CHIP_PADDING;
+      float calcY = 0.0F;
+      for (String mode : modeSetting.modes) {
+         float modeWidth = renderer2D.measureText(FontRegistry.INTER_MEDIUM, mode, 12.0F).width + MODE_CHIP_PADDING * 2.0F;
+         if (calcX + modeWidth > GuiScreen.SETTING_WIDTH && calcX > MODE_CHIP_PADDING) {
+            calcX = MODE_CHIP_PADDING;
+            calcY += MODE_CHIP_HEIGHT + MODE_CHIP_VERTICAL_SPACING;
+         }
+
+         calcX += modeWidth + MODE_CHIP_SPACING;
+      }
+
+      return calcY;
+   }
+
+   private static float measureMultiBooleanRows(Renderer2D renderer2D, MultiBooleanSetting multiBooleanSetting) {
+      float currentX = 0.0F;
+      float rowsBelow = 0.0F;
+      for (BooleanSetting boolSetting : multiBooleanSetting.settings) {
+         float nameWidth = renderer2D.measureText(FontRegistry.INTER_MEDIUM, boolSetting.name, 12.0F).width;
+         float boolWidth = nameWidth + MULTI_BOOL_PADDING * 2.0F;
+         if (currentX + boolWidth > GuiScreen.SETTING_WIDTH) {
+            currentX = 0.0F;
+            rowsBelow += MULTI_BOOL_CHIP_HEIGHT + MULTI_BOOL_SPACING;
+         }
+
+         currentX += boolWidth + MULTI_BOOL_SPACING;
+      }
+
+      return rowsBelow;
+   }
+
    public static float getSettingHeight(Renderer2D renderer2D, Setting setting) {
       if (setting instanceof NoneSetting) {
          return ((NoneSetting)setting).get();
@@ -41,25 +99,7 @@ public class GuiRenderSetting {
       } else if (setting instanceof SliderSetting) {
          return 19.0F;
       } else if (setting instanceof ModeSetting modeSetting) {
-         float width = 132.47F;
-         float modeSpacing = 2.0F;
-         float modeHeight = 10.075F;
-         float padding = 3.0F;
-         float verticalSpacing = -2.0F;
-         float calcX = padding;
-         float calcY = 0.0F;
-
-         for (String mode : modeSetting.modes) {
-            float modeWidth = renderer2D.measureText(FontRegistry.INTER_MEDIUM, mode, 12.0F).width + padding * 2.0F;
-            if (calcX + modeWidth > width && calcX > padding) {
-               calcX = padding;
-               calcY += modeHeight + verticalSpacing;
-            }
-
-            calcX += modeWidth + modeSpacing;
-         }
-
-         return calcY + modeHeight + 12.0F;
+         return measureModeChipRows(renderer2D, modeSetting) + MODE_CHIP_HEIGHT + 12.0F;
       } else if (setting instanceof BindSettings) {
          return 13.0F;
       } else if (setting instanceof StringSetting) {
@@ -67,27 +107,7 @@ public class GuiRenderSetting {
       } else if (setting instanceof HueSetting) {
          return 15.0F;
       } else if (setting instanceof MultiBooleanSetting multiBooleanSetting) {
-         float height = 0.0F;
-         float startY = 10.0F;
-         float currentX = 0.0F;
-         float currentY = startY;
-         float spacing = 3.0F;
-         float boolHeight = 10.0F;
-         float padding = 4.0F;
-         float width = 132.47F;
-
-         for (BooleanSetting boolSetting : multiBooleanSetting.settings) {
-            float nameWidth = renderer2D.measureText(FontRegistry.INTER_MEDIUM, boolSetting.name, 12.0F).width;
-            float boolWidth = nameWidth + padding * 2.0F;
-            if (currentX + boolWidth > 0.0F + width) {
-               currentX = 0.0F;
-               currentY += boolHeight + spacing;
-            }
-
-            currentX += boolWidth + spacing;
-         }
-
-         return currentY - 0.0F + boolHeight;
+         return MULTI_BOOL_TOP + measureMultiBooleanRows(renderer2D, multiBooleanSetting) + MULTI_BOOL_CHIP_HEIGHT;
       } else {
          return 15.0F;
       }
@@ -133,14 +153,13 @@ public class GuiRenderSetting {
          sliderAnim.update();
          sliderAnim.run(targetProgress, 0.24F, sl.selene.util.render.math.animation.anim.util.Easings.QUART_OUT);
          float progress = (float)sliderAnim.getValue();
-         float progressWidth = sliderWidth * progress;
 
          float trackLeft = x;
          float trackRight = x + sliderWidth;
          boolean hovered = GuiScreen.activeSliderSetting == sliderSetting
             || GuiRenderMain.isHovered(mouseX, mouseY, trackLeft, sliderY, sliderWidth, Math.max(12.0F, 19.0F));
          float hover = GuiScreen.sliderHoverAnimations.getOrDefault(sliderSetting, 0.0F);
-         hover = sl.selene.util.render.math.animation.AnimationMath.fast(hover, hovered ? 1.0F : 0.0F, 14.0F);
+         hover = Motion.smooth(hover, hovered ? 1.0F : 0.0F, Motion.HOVER_SPEED);
          GuiScreen.sliderHoverAnimations.put(sliderSetting, hover);
 
          float overflow = GuiScreen.sliderOverflow;
@@ -156,11 +175,8 @@ public class GuiRenderSetting {
          renderer2D.pushScale(scaleX, scaleY, originX, trackCenterY);
          try {
             GlassStyle.outline(renderer2D, trackLeft, sliderY + 2.0F, sliderWidth, baseH, baseH * 0.5F, mainAlpha);
-            renderer2D.rect(trackLeft, sliderY + 2.0F, sliderWidth, baseH, baseH * 0.5F, mainColor6);
-            if (progressWidth > 0.0F) {
-               renderer2D.rect(trackLeft + 1.0F, sliderY + 2.5F, progressWidth - 2.0F, baseH - 1.0F, (baseH - 1.0F) * 0.5F, mainColor);
-            }
-            renderer2D.rect(trackLeft + progressWidth - 5.0F + (progressWidth <= 0.0F ? 5 : 2), sliderY + 2.2F, 5.0F, baseH - 0.12F, (baseH - 0.12F) * 0.5F, textColor);
+            GlassStyle.sliderTrack(renderer2D, trackLeft, sliderY + 2.0F, sliderWidth, baseH, mainColor6, mainColor, progress);
+            GlassStyle.sliderKnob(renderer2D, GlassStyle.sliderKnobX(trackLeft, sliderWidth, progress), sliderY + 2.0F, baseH, textColor);
          } finally {
             renderer2D.popTransform();
          }
@@ -185,50 +201,33 @@ public class GuiRenderSetting {
          }
 
          renderer2D.text(FontRegistry.INTER_MEDIUM, x, y + 7.0F, 13.0F, setting.name, mainColor40);
-         float modeSpacing = 2.0F;
-         float modeHeight = 10.075F;
-         float padding = 3.0F;
-         float verticalSpacing = -2.0F;
-         float calcX = padding;
-         float calcY = 0.0F;
-
-         for (String mode : modeSetting.modes) {
-            float modeWidth = renderer2D.measureText(FontRegistry.INTER_MEDIUM, mode, 12.0F).width + padding * 2.0F;
-            if (calcX + modeWidth > width && calcX > padding) {
-               calcX = padding;
-               calcY += modeHeight + verticalSpacing;
-            }
-
-            calcX += modeWidth + modeSpacing;
-         }
-
          float modeContainerY = y + 10.0F;
-         float modeContainerHeight = calcY + modeHeight;
+         float modeContainerHeight = measureModeChipRows(renderer2D, modeSetting) + MODE_CHIP_HEIGHT;
          GlassStyle.outline(renderer2D, x, modeContainerY, width, modeContainerHeight, 3.0F, mainAlpha);
          renderer2D.rect(x, modeContainerY, width, modeContainerHeight, 3.0F, mainColor6);
-         float currentX = padding;
+         float currentX = MODE_CHIP_PADDING;
          float currentY = 1.5F;
 
          for (String mode : modeSetting.modes) {
             boolean isSelected = mode.equals(modeSetting.currentMode);
-            float modeWidth = renderer2D.measureText(FontRegistry.INTER_MEDIUM, mode, 12.0F).width + padding * 2.0F;
-            if (currentX + modeWidth > width && currentX > padding) {
-               currentX = padding;
-               currentY += modeHeight + verticalSpacing;
+            float modeWidth = renderer2D.measureText(FontRegistry.INTER_MEDIUM, mode, 12.0F).width + MODE_CHIP_PADDING * 2.0F;
+            if (currentX + modeWidth > width && currentX > MODE_CHIP_PADDING) {
+               currentX = MODE_CHIP_PADDING;
+               currentY += MODE_CHIP_HEIGHT + MODE_CHIP_VERTICAL_SPACING;
             }
 
             float anim = modeAnims.getOrDefault(mode, 0.0F);
             float target = isSelected ? 1.0F : 0.0F;
-            anim = AnimationMath.fast(anim, target, 10.0F);
+            anim = Motion.smooth(anim, target, Motion.CHIP_SPEED);
             modeAnims.put(mode, anim);
             if (anim > 0.01F) {
                int chipBg = ColorUtil.overCol(mainColor6, mainColor, anim);
                chipBg = Renderer2D.ColorUtil.replAlpha(chipBg, (int)(12.0F + 18.0F * anim));
-               renderer2D.rect(x + currentX, modeContainerY + currentY, modeWidth, modeHeight, 3.0F, chipBg);
+               renderer2D.rect(x + currentX, modeContainerY + currentY, modeWidth, MODE_CHIP_HEIGHT, 3.0F, chipBg);
             }
             int modeColor = ColorUtil.overCol(mainColor40, mainColor, anim);
             renderer2D.text(FontRegistry.INTER_MEDIUM, x + currentX, modeContainerY + currentY + 5.5F, 12.0F, mode, modeColor);
-            currentX += modeWidth + modeSpacing;
+            currentX += modeWidth + MODE_CHIP_SPACING;
          }
 
          height = modeContainerHeight + 12.0F;
@@ -316,10 +315,9 @@ public class GuiRenderSetting {
 
          boolean isActive = GuiScreen.activeStringSetting == stringSetting && stringSetting.active;
          if (isActive) {
-            long currentTime = System.currentTimeMillis();
-            boolean showCursor = currentTime / 500L % 2L == 0L;
-            if (showCursor) {
-               renderer2D.rect(cursorX - 3.0F, textY - 0.5F, 1.0F, 8.0F, 0.5F, mainColor);
+            float cursorAlpha = Motion.blink(Motion.CURSOR_BLINK_HALF_PERIOD_MS);
+            if (cursorAlpha > 0.01F) {
+               renderer2D.rect(cursorX - 3.0F, textY - 0.5F, 1.0F, 8.0F, 0.5F, ColorUtil.multAlpha(mainColor, cursorAlpha));
             }
          }
 
@@ -355,37 +353,33 @@ public class GuiRenderSetting {
          height = 15.0F;
       } else if (setting instanceof MultiBooleanSetting multiBooleanSetting) {
          renderer2D.text(FontRegistry.INTER_MEDIUM, x, y + 7.0F, 13.0F, setting.name, mainColor40);
-         float startY = y + 10.0F;
          float currentX = x;
-         float currentY = startY;
-         float spacing = 3.0F;
-         float boolHeight = 10.0F;
-         float padding = 4.0F;
+         float currentY = y + MULTI_BOOL_TOP;
          HashMap<String, Float> boolAnims = multiBooleanAnimation.computeIfAbsent(multiBooleanSetting, k -> new HashMap<>());
 
          for (BooleanSetting boolSetting : multiBooleanSetting.settings) {
             float nameWidth = renderer2D.measureText(FontRegistry.INTER_MEDIUM, boolSetting.name, 12.0F).width;
-            float boolWidth = nameWidth + padding * 2.0F;
+            float boolWidth = nameWidth + MULTI_BOOL_PADDING * 2.0F;
             if (currentX + boolWidth > x + width) {
                currentX = x;
-               currentY += boolHeight + spacing;
+               currentY += MULTI_BOOL_CHIP_HEIGHT + MULTI_BOOL_SPACING;
             }
 
-            GlassStyle.outline(renderer2D, currentX, currentY, boolWidth, boolHeight, 3.0F, mainAlpha);
+            GlassStyle.outline(renderer2D, currentX, currentY, boolWidth, MULTI_BOOL_CHIP_HEIGHT, 3.0F, mainAlpha);
             boolAnims.putIfAbsent(boolSetting.name, boolSetting.get() ? 1.0F : 0.0F);
             float anim = boolAnims.get(boolSetting.name);
             float target = boolSetting.get() ? 1.0F : 0.0F;
-            anim = AnimationMath.fast(anim, target, 10.0F);
+            anim = Motion.smooth(anim, target, Motion.CHIP_SPEED);
             boolAnims.put(boolSetting.name, anim);
             int chipBg = ColorUtil.overCol(mainColor6, mainColor, anim);
             chipBg = Renderer2D.ColorUtil.replAlpha(chipBg, (int)(12.0F + 18.0F * anim));
-            renderer2D.rect(currentX, currentY, boolWidth, boolHeight, 3.0F, chipBg);
+            renderer2D.rect(currentX, currentY, boolWidth, MULTI_BOOL_CHIP_HEIGHT, 3.0F, chipBg);
             textColor = ColorUtil.overCol(mainColor40, mainColor, anim);
-            renderer2D.text(FontRegistry.INTER_MEDIUM, currentX + padding, currentY + 3.0F - 1.0F + 5.0F, 12.0F, boolSetting.name, textColor);
-            currentX += boolWidth + spacing;
+            renderer2D.text(FontRegistry.INTER_MEDIUM, currentX + MULTI_BOOL_PADDING, currentY + 3.0F - 1.0F + 5.0F, 12.0F, boolSetting.name, textColor);
+            currentX += boolWidth + MULTI_BOOL_SPACING;
          }
 
-         height = currentY - y + boolHeight;
+         height = MULTI_BOOL_TOP + measureMultiBooleanRows(renderer2D, multiBooleanSetting) + MULTI_BOOL_CHIP_HEIGHT;
       }
 
       return height + 1.0F;

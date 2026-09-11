@@ -422,7 +422,7 @@ public class ChunkFinder extends Module {
                if (y - bottom + 1 >= minHeight && fullyGrown) {
                   found.add(new Finding(Kind.KELP, y, y, chunkX, chunkX + 15, chunkZ, chunkZ + 15));
                }
-               y = bottom; 
+               y = bottom;
             }
          }
       }

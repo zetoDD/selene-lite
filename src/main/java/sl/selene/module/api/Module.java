@@ -112,6 +112,10 @@ public class Module extends Config {
       return this.displayName;
    }
 
+   public boolean isEnabledByDefault() {
+      return false;
+   }
+
    public String getArrayListSuffix() {
       return null;
    }
@@ -140,9 +144,7 @@ public class Module extends Config {
 
    public JsonObject save() {
       JsonObject object = new JsonObject();
-      if (this.enable) {
-         object.addProperty("enable", this.enable);
-      }
+      object.addProperty("enable", this.enable);
 
       if (this.bind > 0 || this.bind <= -100) {
          object.addProperty("keyIndex", this.bind);
@@ -200,7 +202,9 @@ public class Module extends Config {
                } else if (set instanceof ModeSetting) {
                   ((ModeSetting)set).currentMode = propertiesObject.get(set.name).getAsString();
                } else if (set instanceof SliderSetting) {
-                  ((SliderSetting)set).current = propertiesObject.get(set.name).getAsFloat();
+                  float sliderValue = propertiesObject.get(set.name).getAsFloat();
+                  ((SliderSetting)set).current = Math.max(((SliderSetting)set).minimum,
+                        Math.min(((SliderSetting)set).maximum, sliderValue));
                } else if (set instanceof BindSettings) {
                   ((BindSettings)set).key = propertiesObject.get(set.name).getAsInt();
                } else if (set instanceof StringSetting) {

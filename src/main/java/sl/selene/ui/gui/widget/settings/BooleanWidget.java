@@ -6,19 +6,20 @@ import net.fabricmc.api.Environment;
 import sl.selene.module.api.Module;
 import sl.selene.module.api.setting.Setting;
 import sl.selene.module.api.setting.impl.BooleanSetting;
-import sl.selene.ui.Colors;
+import sl.selene.ui.gui.component.render.GlassStyle;
 import sl.selene.util.render.animation.AnimationSystem;
 import sl.selene.util.render.animation.Easings;
 import sl.selene.util.render.animation.SpringConfig;
 import sl.selene.util.render.animation.SpringFloatAnimator;
 import sl.selene.util.render.core.Renderer2D;
 import sl.selene.util.render.text.FontRegistry;
-import sl.selene.util.render.ui.UiIcons;
 import sl.selene.util.render.utils.Color;
 
 @Environment(EnvType.CLIENT)
 public final class BooleanWidget implements SettingWidget {
-   private static final float ICON_SIZE = 16.0F;
+   private static final float ROW_HEIGHT = 62.0F;
+   private static final float TOGGLE_WIDTH = 26.0F;
+   private static final float TOGGLE_HEIGHT = 13.0F;
    private static final SpringConfig TOGGLE_SPRING = SpringConfig.of(2.1F, 0.55F);
    private static final SpringConfig HOVER_SPRING = SpringConfig.of(1.4F, 0.7F);
    private final Module module;
@@ -63,10 +64,10 @@ public final class BooleanWidget implements SettingWidget {
 
    @Override
    public void layout(float panelX, float top, float panelWidth) {
-      this.rowBounds = new BooleanWidget.Rect(panelX, top, panelWidth, 62.0F);
-      float toggleX = panelX + panelWidth - 18.0F - 22.0F;
-      float toggleY = top + 20.0F;
-      this.toggleBounds = new BooleanWidget.Rect(toggleX, toggleY, 22.0F, 22.0F);
+      this.rowBounds = new BooleanWidget.Rect(panelX, top, panelWidth, ROW_HEIGHT);
+      float toggleX = panelX + panelWidth - 18.0F - TOGGLE_WIDTH;
+      float toggleY = top + (ROW_HEIGHT - TOGGLE_HEIGHT) * 0.5F;
+      this.toggleBounds = new BooleanWidget.Rect(toggleX, toggleY, TOGGLE_WIDTH, TOGGLE_HEIGHT);
       this.textX = panelX + 18.0F;
       this.textBaseline = top + 31.0F + 5.0F;
    }
@@ -81,26 +82,7 @@ public final class BooleanWidget implements SettingWidget {
       float effectiveAlpha = alphaMultiplier * (float)clamp01(expansionProgress);
       if (!(effectiveAlpha <= 0.0F)) {
          float toggleProgress = this.toggleAnimator.getValue();
-         double fillAlpha = clamp01(effectiveAlpha * toggleProgress);
-         if (fillAlpha > 0.001F) {
-            renderer.rect(
-               this.toggleBounds.x + 1.0F,
-               this.toggleBounds.y + 1.0F,
-               this.toggleBounds.width - 2.0F,
-               this.toggleBounds.height - 2.0F,
-               4.0F,
-               Color.getRGB(Colors.getClientPrimary(), fillAlpha)
-            );
-         }
-
-         double outlineAlpha = clamp01(effectiveAlpha);
-         renderer.rectOutline(
-            this.toggleBounds.x, this.toggleBounds.y, this.toggleBounds.width, this.toggleBounds.height, 4.0F, Color.getRGB(5197646, outlineAlpha), 1.0F
-         );
-         double iconAlpha = clamp01(toggleProgress * effectiveAlpha);
-         if (iconAlpha > 0.001F) {
-            UiIcons.check(renderer, this.toggleBounds.centerX(), this.toggleBounds.centerY(), ICON_SIZE, (float)iconAlpha);
-         }
+         GlassStyle.toggle(renderer, this.toggleBounds.x, this.toggleBounds.y, this.toggleBounds.width, this.toggleBounds.height, effectiveAlpha, toggleProgress);
 
          double textAlpha = clamp01(effectiveAlpha);
          float highlightProgress = this.hoverAnimator.getValue();

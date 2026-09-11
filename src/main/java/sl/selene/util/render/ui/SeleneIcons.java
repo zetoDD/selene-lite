@@ -71,6 +71,16 @@ public final class SeleneIcons {
    }
 
    public static void draw(Renderer2D renderer, String name, float centerX, float centerY, float size, float alpha) {
+      draw(renderer, name, centerX, centerY, size, alpha, -1);
+   }
+
+   public static void drawTinted(Renderer2D renderer, String name, float centerX, float centerY, float size, float alpha,
+         int tintRgba) {
+      draw(renderer, name, centerX, centerY, size, alpha, tintRgba);
+   }
+
+   private static void draw(Renderer2D renderer, String name, float centerX, float centerY, float size, float alpha,
+         int tintRgba) {
       if (renderer == null || name == null || size <= 0.0F || alpha <= 0.001F) {
          return;
       }
@@ -82,19 +92,19 @@ public final class SeleneIcons {
 
       int categoryTexture = categoryTexture(name);
       if (categoryTexture > 0) {
-         drawSingle(renderer, categoryTexture, centerX, centerY, size, alpha);
+         drawSingle(renderer, categoryTexture, centerX, centerY, size, alpha, tintRgba);
          return;
       }
 
       int customTexture = customIconTexture(name);
       if (customTexture > 0) {
-         drawSingle(renderer, customTexture, centerX, centerY, size, alpha);
+         drawSingle(renderer, customTexture, centerX, centerY, size, alpha, tintRgba);
          return;
       }
 
       Integer semanticIndex = SEMANTIC_INDEX.get(name);
       if (semanticIndex != null) {
-         drawSemantic(renderer, semanticIndex, centerX, centerY, size, alpha);
+         drawSemantic(renderer, semanticIndex, centerX, centerY, size, alpha, tintRgba);
          return;
       }
 
@@ -134,7 +144,8 @@ public final class SeleneIcons {
          u0,
          v0,
          u1,
-         v1
+         v1,
+         tintRgba
       );
       renderer.popAlpha();
    }
@@ -196,14 +207,16 @@ public final class SeleneIcons {
       return texture;
    }
 
-   private static void drawSingle(Renderer2D renderer, int texture, float centerX, float centerY, float size, float alpha) {
+   private static void drawSingle(Renderer2D renderer, int texture, float centerX, float centerY, float size, float alpha,
+         int tintRgba) {
       renderer.pushAlpha(clamp01(alpha));
 
-      renderer.drawRgbaTexture(texture, centerX - size * 0.5F, centerY - size * 0.5F, size, size, -1, false);
+      renderer.drawRgbaTexture(texture, centerX - size * 0.5F, centerY - size * 0.5F, size, size, tintRgba, false);
       renderer.popAlpha();
    }
 
-   private static void drawSemantic(Renderer2D renderer, int index, float centerX, float centerY, float size, float alpha) {
+   private static void drawSemantic(Renderer2D renderer, int index, float centerX, float centerY, float size, float alpha,
+         int tintRgba) {
       int texture = semanticAtlasTexture();
       if (texture <= 0) {
          return;
@@ -225,7 +238,8 @@ public final class SeleneIcons {
          u0,
          v0,
          u1,
-         v1
+         v1,
+         tintRgba
       );
       renderer.popAlpha();
    }

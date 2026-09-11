@@ -92,4 +92,25 @@ public final class GlassStyle {
       int onKnob = Renderer2D.ColorUtil.rgba(22, 24, 29, Math.round(255.0F * safeAlpha));
       r.circle(knobX, y + radius, knobRadius, 0.0F, 1.0F, ColorUtil.overCol(offKnob, onKnob, t));
    }
+
+   public static void sliderTrack(Renderer2D r, float x, float y, float w, float h, int trackColor, int fillColor, float progress) {
+      float t = Math.max(0.0F, Math.min(1.0F, progress));
+      r.rect(x, y, w, h, h * 0.5F, trackColor);
+      float fillWidth = w * t;
+      if (fillWidth > 0.0F) {
+         float fillHeight = h - 1.0F;
+         r.rect(x + 1.0F, y + 0.5F, Math.max(0.0F, fillWidth - 2.0F), fillHeight, fillHeight * 0.5F, fillColor);
+      }
+   }
+
+   public static float sliderKnobX(float x, float w, float progress) {
+      float t = Math.max(0.0F, Math.min(1.0F, progress));
+      float fillWidth = w * t;
+      return x + fillWidth - 5.0F + (fillWidth <= 0.0F ? 5.0F : 2.0F);
+   }
+
+   public static void sliderKnob(Renderer2D r, float knobX, float trackY, float trackH, int knobColor) {
+      float knobHeight = trackH - 0.12F;
+      r.rect(knobX, trackY + 0.2F, 5.0F, knobHeight, knobHeight * 0.5F, knobColor);
+   }
 }

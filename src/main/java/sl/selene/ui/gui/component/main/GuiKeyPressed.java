@@ -8,7 +8,7 @@ import sl.selene.client.SeleneKeyBindings;
 import sl.selene.cfg.ConfigManager;
 import sl.selene.module.impl.client.MenuSettingsModule;
 import sl.selene.ui.gui.GuiScreen;
-import sl.selene.ui.gui.component.render.GuiRenderConfigPopup;
+import sl.selene.ui.gui.component.render.GuiRenderConfigPanel;
 import sl.selene.util.render.math.animation.anim.util.Easings;
 
 @Environment(EnvType.CLIENT)
@@ -17,7 +17,6 @@ public class GuiKeyPressed extends GuiScreen {
       if (GuiScreen.configInputActive) {
          if (keyCode == 256) {
             GuiScreen.configInputActive = false;
-            GuiScreen.configPopupOpen = false;
             return true;
          }
 
@@ -25,10 +24,10 @@ public class GuiKeyPressed extends GuiScreen {
             String name = GuiScreen.configInputText;
             if (ConfigManager.isValidConfigName(name) && Selene.get != null && Selene.get.configManager != null) {
                Selene.get.configManager.saveConfig(name);
-               GuiRenderConfigPopup.setStatus("Saved '" + name + "'");
+               GuiRenderConfigPanel.setStatus("Saved '" + name + "'");
                GuiScreen.configInputText = "";
             } else {
-               GuiRenderConfigPopup.setStatus("Invalid name");
+               GuiRenderConfigPanel.setStatus("Invalid name");
             }
 
             GuiScreen.configInputActive = false;

@@ -85,7 +85,7 @@ public class GuiClient extends Screen {
       MovementManager.getInstance().unlockMovement("Search");
       GuiScreen.activeSearch = false;
       GuiScreen.searchText = "";
-      GuiScreen.settingsPageOpen = false;
+      GuiScreen.selectTab(GuiScreen.TAB_MODULES);
       GuiScreen.searchSelectAll = false;
       GuiScreen.configInputActive = false;
       GuiScreen.configInputText = "";
@@ -119,6 +119,8 @@ public class GuiClient extends Screen {
       ScaledResolution scaledRes = new ScaledResolution(mc);
       int scaledWidth = scaledRes.getWidth();
       int scaledHeight = scaledRes.getHeight();
+      GuiScreen.screenWidth = scaledWidth;
+      GuiScreen.screenHeight = scaledHeight;
       GuiScreen.x = Math.max(0.0F, (scaledWidth - GuiScreen.width) / 2.0F);
       GuiScreen.y = Math.max(0.0F, (scaledHeight - GuiScreen.height) / 2.0F);
       GuiScreen.mainAnimation.reset();

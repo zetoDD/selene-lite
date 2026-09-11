@@ -231,7 +231,7 @@ public class HoleESP extends Module {
 
       List<BlockPos> region = this.floodRegion(List.of(start), maxSize);
       if (region == null || !this.isEnclosedRegion(region)) {
-         return; 
+         return;
       }
       addBounds(bounds, region);
       int openingCount = region.size();
@@ -251,7 +251,7 @@ public class HoleESP extends Module {
          }
          List<BlockPos> above = this.floodRegion(seeds, maxSize);
          if (above == null || !this.isEnclosedRegion(above) || above.size() > openingCount + 2) {
-            break; 
+            break;
          }
          addBounds(bounds, above);
          topY = above.get(0).getY();
@@ -271,12 +271,12 @@ public class HoleESP extends Module {
             }
          }
          if (seeds.isEmpty()) {
-            floorY = level.get(0).getY(); 
+            floorY = level.get(0).getY();
             break;
          }
          List<BlockPos> next = this.floodRegion(seeds, maxSize);
          if (next == null || !this.isEnclosedRegion(next) || next.size() > openingCount + 2) {
-            return; 
+            return;
          }
          floorY = next.get(0).getY();
          level = next;
@@ -305,11 +305,11 @@ public class HoleESP extends Module {
          int limit = Math.min(cell.getY() + 1 + SKY_EXPOSURE_WINDOW, maxY);
          for (; y <= limit; y++) {
             if (!this.isPitLike(cell.withY(y))) {
-               break; 
+               break;
             }
          }
          if (y > limit) {
-            return true; 
+            return true;
          }
       }
       return false;

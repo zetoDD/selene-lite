@@ -181,9 +181,14 @@ public final class Renderer2D {
 
    public void drawRgbaTextureWithUV(int texture, float x, float y, float w, float h, float u0, float v0, float u1,
          float v1) {
+      this.drawRgbaTextureWithUV(texture, x, y, w, h, u0, v0, u1, v1, -1);
+   }
+
+   public void drawRgbaTextureWithUV(int texture, float x, float y, float w, float h, float u0, float v0, float u1,
+         float v1, int tintRgba) {
       this.ensureFrame();
       if (texture > 0) {
-         this.backend.drawRgbaTexturedQuad(texture, x, y, w, h, u0, v0, u1, v1, this.modulateColor(-1),
+         this.backend.drawRgbaTexturedQuad(texture, x, y, w, h, u0, v0, u1, v1, this.modulateColor(tintRgba),
                this.transformStack.current(), false);
       }
    }

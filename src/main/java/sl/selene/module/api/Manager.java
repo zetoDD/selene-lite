@@ -13,6 +13,7 @@ import sl.selene.module.impl.movement.ToggleSprint;
 import sl.selene.module.impl.movement.WTap;
 import sl.selene.module.impl.visuals.AspectRation;
 import sl.selene.module.impl.visuals.AmethystESP;
+import sl.selene.module.impl.visuals.BossBarRemover;
 import sl.selene.module.impl.visuals.ChunkFinder;
 import sl.selene.module.impl.visuals.HoleESP;
 import sl.selene.module.impl.visuals.StorageESP;
@@ -63,6 +64,7 @@ public class Manager {
       this.module.add(new StorageESP());
       this.module.add(new AmethystESP());
       this.module.add(new ChunkFinder());
+      this.module.add(new BossBarRemover());
       this.module.add(new NameHider());
    }
 

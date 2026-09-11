@@ -74,6 +74,7 @@ public class TriggerBot extends Module {
    private boolean clickHeld;
    private long clickReleaseAt;
    private int boundAttackKeyCode = -1;
+   private InputUtil.Key boundAttackKey;
 
    public TriggerBot() {
       this.addSettings(new Setting[] {
@@ -109,18 +110,10 @@ public class TriggerBot extends Module {
          releaseClick();         disarm();
          return;
       }
-      tickHeldClick();
       if (clickHeld) {
          if (System.currentTimeMillis() >= clickReleaseAt) {
             releaseClick();
          }
-         disarm();
-         return;
-      }
-
-      tickHeldClick();
-      if (clickHeld) {
-         tickHeldClick();
          disarm();
          return;
       }
@@ -193,18 +186,18 @@ public class TriggerBot extends Module {
       return CLICK_HOLD_MIN + (long) (Math.random() * CLICK_HOLD_SPREAD);
    }
 
-   private void refreshBoundAttackKeyCode() {
+   private void refreshBoundAttackKey() {
+      boundAttackKey = null;
+      boundAttackKeyCode = -1;
       if (mc.options == null) {
-         boundAttackKeyCode = -1;
          return;
       }
-      net.minecraft.client.util.InputUtil.Key key = InputUtil.fromTranslationKey(
-            mc.options.attackKey.getBoundKeyTranslationKey());
-      if (key == null || key.getCode() == net.minecraft.client.util.InputUtil.UNKNOWN_KEY.getCode()) {
-         boundAttackKeyCode = -1;
-      } else {
-         boundAttackKeyCode = key.getCode();
+      InputUtil.Key key = InputUtil.fromTranslationKey(mc.options.attackKey.getBoundKeyTranslationKey());
+      if (key == null || key.getCode() == InputUtil.UNKNOWN_KEY.getCode()) {
+         return;
       }
+      boundAttackKey = key;
+      boundAttackKeyCode = key.getCode();
    }
 
    private boolean canLandCrit() {
@@ -299,13 +292,12 @@ public class TriggerBot extends Module {
          return;
       }
       mc.crosshairTarget = hit;
-      refreshBoundAttackKeyCode();
+      refreshBoundAttackKey();
       if (boundAttackKeyCode > 0) {
-         KeyBinding.setKeyPressed(net.minecraft.client.util.InputUtil.fromTranslationKey(
-               mc.options.attackKey.getBoundKeyTranslationKey()), true);
-      } else {
-         KeyBinding.onKeyPressed(net.minecraft.client.util.InputUtil.fromTranslationKey(
-               mc.options.attackKey.getBoundKeyTranslationKey()));
+         KeyBinding.setKeyPressed(boundAttackKey, true);
+         KeyBinding.onKeyPressed(boundAttackKey);
+      } else if (boundAttackKey != null) {
+         KeyBinding.onKeyPressed(boundAttackKey);
       }
       clickHeld = true;
       clickReleaseAt = System.currentTimeMillis() + rollClickHold();
@@ -317,20 +309,35 @@ public class TriggerBot extends Module {
       if (!clickHeld) {
          return;
       }
-      if (mc.options != null && boundAttackKeyCode > 0) {
-         KeyBinding.setKeyPressed(net.minecraft.client.util.InputUtil.fromTranslationKey(
-               mc.options.attackKey.getBoundKeyTranslationKey()), false);
-         mc.options.attackKey.setPressed(false);
+      if (mc.options != null && boundAttackKeyCode > 0 && boundAttackKey != null) {
+         InputUtil.Key current = InputUtil.fromTranslationKey(mc.options.attackKey.getBoundKeyTranslationKey());
+         if (current != null && current.getCategory() == boundAttackKey.getCategory()
+               && current.getCode() == boundAttackKeyCode) {
+            if (!isPhysicallyPressed(boundAttackKey)) {
+               KeyBinding.setKeyPressed(boundAttackKey, false);
+            }
+         } else {
+            mc.options.attackKey.setPressed(false);
+         }
       }
       clickHeld = false;
       CrosshairPin.clear(this);
       boundAttackKeyCode = -1;
+      boundAttackKey = null;
    }
 
-   private void tickHeldClick() {
-      if (!clickHeld) {
-         return;
+   private boolean isPhysicallyPressed(InputUtil.Key key) {
+      long handle = mc.getWindow() != null ? mc.getWindow().getHandle() : 0L;
+      if (handle == 0L) {
+         return false;
       }
+      if (key.getCategory() == InputUtil.Type.MOUSE) {
+         return GLFW.glfwGetMouseButton(handle, key.getCode()) == GLFW.GLFW_PRESS;
+      }
+      if (key.getCategory() == InputUtil.Type.KEYSYM) {
+         return mc.getWindow() != null && InputUtil.isKeyPressed(mc.getWindow(), key.getCode());
+      }
+      return false;
    }
 
    private void disarm() {

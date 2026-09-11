@@ -1,12 +1,10 @@
 package sl.selene.ui.gui.component.render;
 
-import java.awt.Color;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.util.math.MatrixStack;
 import sl.selene.module.api.Category;
 import sl.selene.ui.gui.GuiScreen;
-import sl.selene.util.color.ColorUtil;
 import sl.selene.util.render.animation.util.Easings;
 import sl.selene.util.render.core.Renderer2D;
 import sl.selene.util.render.text.FontRegistry;
@@ -22,37 +20,27 @@ public class GuiRenderLeftPanel extends GuiScreen {
          return;
       }
 
-      int mainColor = Renderer2D.ColorUtil.replAlpha(Renderer2D.ColorUtil.getMainColor(1, 1), (int)(255.0F * mainAlpha));
-      int mainColor40 = Renderer2D.ColorUtil.replAlpha(Renderer2D.ColorUtil.getMainColor(1, 1), (int)(102.0F * mainAlpha));
       int textColor = Renderer2D.ColorUtil.replAlpha(Renderer2D.ColorUtil.getTextColor(1, 1), (int)(255.0F * mainAlpha));
-      int textTwoColor40 = Renderer2D.ColorUtil.replAlpha(Renderer2D.ColorUtil.getTextTwoColor(1, 1), (int)(102.0F * mainAlpha));
-      boolean vanillaStyle = GuiScreen.isVanillaStyle();
-      if (vanillaStyle) {
-         renderer2D.rect(
-            GuiScreen.x,
-            GuiScreen.y + GuiScreen.HEADER_HEIGHT,
-            GuiScreen.SIDEBAR_WIDTH,
-            GuiScreen.height - GuiScreen.HEADER_HEIGHT - GuiScreen.SIDEBAR_BOTTOM_INSET,
-            1.25F,
-            Renderer2D.ColorUtil.replAlpha(new Color(44, 44, 44).getRGB(), (int)(225.0F * mainAlpha))
-         );
-      } else {
 
-         GlassStyle.panel(
-            renderer2D,
-            GuiScreen.x,
-            GuiScreen.y + 70.0F,
-            GuiScreen.SIDEBAR_WIDTH - GuiScreen.GAP,
-            176.0F,
-            8.0F,
-            8.0F,
-            8.0F,
-            8.0F,
-            mainAlpha
-         );
-      }
-      if (GuiScreen.settingsPageOpen) {
+      GlassStyle.panel(
+         renderer2D,
+         GuiScreen.x,
+         GuiScreen.y + 70.0F,
+         GuiScreen.SIDEBAR_WIDTH - GuiScreen.GAP,
+         176.0F,
+         8.0F,
+         8.0F,
+         8.0F,
+         8.0F,
+         mainAlpha
+      );
+      if (GuiScreen.selectedTab == GuiScreen.TAB_SETTINGS) {
          GuiRenderSettings.renderSidebar(renderer2D, mainAlpha);
+         return;
+      }
+
+      if (GuiScreen.selectedTab == GuiScreen.TAB_CONFIG) {
+         GuiRenderConfigPanel.renderSidebar(renderer2D, mainAlpha);
          return;
       }
 

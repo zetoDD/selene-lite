@@ -1048,7 +1048,7 @@ public final class GlBackend implements RenderBackend {
    public boolean prepareRegionBlur(int x, int y, int width, int height, float radiusPx) {
       if (width > 0 && height > 0) {
          int texture = this.captureRegionToTexture(x, y, width, height, false);
-         int blurred = texture; 
+         int blurred = texture;
          this.preparedRegionBlurTex = blurred;
          this.preparedRegionBlurW = width;
          this.preparedRegionBlurH = height;

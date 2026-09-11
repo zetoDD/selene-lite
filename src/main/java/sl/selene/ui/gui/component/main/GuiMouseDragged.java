@@ -6,7 +6,6 @@ import sl.selene.Selene;
 import sl.selene.module.api.setting.impl.HueSetting;
 import sl.selene.module.api.setting.impl.SliderSetting;
 import sl.selene.ui.gui.GuiScreen;
-import sl.selene.ui.gui.component.render.GuiRenderConfigPopup;
 import sl.selene.util.render.math.ScaleHelper;
 import sl.selene.util.render.math.ScaledResolution;
 
@@ -17,10 +16,6 @@ public class GuiMouseDragged extends GuiScreen {
       int mouseY = (int)ScaleHelper.calcFromScaled((float)pMouseX, (float)pMouseY)[1];
       int contentMouseX = mouseX;
       int contentMouseY = mouseY;
-
-      if (GuiScreen.configPopupDragging && pButton == 0) {
-         return GuiRenderConfigPopup.drag(contentMouseX, contentMouseY);
-      }
 
       if (GuiScreen.windowDragging && pButton == 0) {
          ScaledResolution sr = new ScaledResolution(GuiScreen.mc);

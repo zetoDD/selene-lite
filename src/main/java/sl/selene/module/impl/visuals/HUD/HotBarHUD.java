@@ -25,7 +25,6 @@ import sl.selene.util.render.core.Renderer2D;
 import sl.selene.util.render.math.animation.anim.util.Animation2;
 import sl.selene.util.render.math.animation.anim.util.Easings;
 import sl.selene.util.render.text.FontRegistry;
-import sl.selene.ui.gui.GuiScreen;
 
 @Environment(EnvType.CLIENT)
 public class HotBarHUD {
@@ -65,19 +64,18 @@ public class HotBarHUD {
 
    public static void hotbar(Renderer2D r2, DrawContext drawContext) {
       if (mc.player != null && mc.world != null) {
-         boolean vanillaStyle = GuiScreen.isVanillaStyle();
-         float hotbarWidth = vanillaStyle ? 206.0F : 463.5F;
-         float hotbarHeight = vanillaStyle ? 24.0F : 51.5F;
+         float hotbarWidth = 463.5F;
+         float hotbarHeight = 51.5F;
          float screenWidth = mc.getWindow().getWidth();
          float screenHeight = mc.getWindow().getHeight();
          float x = (screenWidth - hotbarWidth) / 2.0F;
          float y = screenHeight - hotbarHeight - 10.0F;
          HudEditor.registerRect(x, y, hotbarWidth, hotbarHeight);
-         Hud.drawClientRect(r2, x, y, hotbarWidth, hotbarHeight, vanillaStyle ? 2.0F : 13.0F, 1.0F, 1.0F);
+         Hud.drawClientRect(r2, x, y, hotbarWidth, hotbarHeight, 13.0F, 1.0F, 1.0F);
          int slots = 9;
-         float normalSlotSize = vanillaStyle ? 20.0F : 35.0F;
-         float selectedSlotSize = vanillaStyle ? 20.0F : 51.5F;
-         float paddingX = vanillaStyle ? 13.0F : 25.0F;
+         float normalSlotSize = 35.0F;
+         float selectedSlotSize = 51.5F;
+         float paddingX = 25.0F;
          float availableWidth = hotbarWidth - 2.0F * paddingX;
          float slotCenterSpacing = availableWidth / (slots - 1);
          int selectedSlot = mc.player.getInventory().getSelectedSlot();
@@ -86,44 +84,27 @@ public class HotBarHUD {
          float activeSlotX = activeCenterX - selectedSlotSize / 2.0F;
          float activeSlotY = y + (hotbarHeight - selectedSlotSize) / 2.0F;
 
-         if (vanillaStyle) {
-            for (int i = 0; i < slots; i++) {
-               float slotCenterX = x + paddingX + i * slotCenterSpacing;
-               float slotX = slotCenterX - normalSlotSize / 2.0F;
-               float slotY = y + (hotbarHeight - normalSlotSize) / 2.0F;
-               r2.rect(slotX, slotY, normalSlotSize, normalSlotSize, 2.0F, Renderer2D.ColorUtil.replAlpha(0x222222, 190));
-               r2.rectOutline(slotX, slotY, normalSlotSize, normalSlotSize, 2.0F, Renderer2D.ColorUtil.replAlpha(0x8B8B8B, 190), 1.0F);
-            }
-         }
-
-         if (vanillaStyle) {
-            r2.rectOutline(activeSlotX, activeSlotY, selectedSlotSize, selectedSlotSize, 2.0F,
-                  Renderer2D.ColorUtil.replAlpha(-1, 230), 1.0F);
-         } else {
-            GlassStyle.card(r2, activeSlotX + 1.0F, activeSlotY, selectedSlotSize, selectedSlotSize, 1.0F);
-            r2.rect(
-               activeSlotX + 1.0F,
-               activeSlotY,
-               selectedSlotSize,
-               selectedSlotSize,
-               13.0F,
-               Renderer2D.ColorUtil.replAlpha(Renderer2D.ColorUtil.getMainColor(1, 1), 28)
-            );
-         }
+         GlassStyle.card(r2, activeSlotX + 1.0F, activeSlotY, selectedSlotSize, selectedSlotSize, 1.0F);
+         r2.rect(
+            activeSlotX + 1.0F,
+            activeSlotY,
+            selectedSlotSize,
+            selectedSlotSize,
+            13.0F,
+            Renderer2D.ColorUtil.replAlpha(Renderer2D.ColorUtil.getMainColor(1, 1), 28)
+         );
 
          float offset = 0.0F;
          for (int i = 0; i < slots; i++) {
             float slotCenterX = x + paddingX + i * slotCenterSpacing;
-            if (!vanillaStyle) {
-               r2.text(
-                  FontRegistry.INTER_SEMIBOLD,
-                  x + offset + 5.5F,
-                  y + 45.0F,
-                  26.0F,
-                  String.valueOf(i + 1),
-                  Renderer2D.ColorUtil.replAlpha(Renderer2D.ColorUtil.getMainColor(1, 1), 80)
-               );
-            }
+            r2.text(
+               FontRegistry.INTER_SEMIBOLD,
+               x + offset + 5.5F,
+               y + 45.0F,
+               26.0F,
+               String.valueOf(i + 1),
+               Renderer2D.ColorUtil.replAlpha(Renderer2D.ColorUtil.getMainColor(1, 1), 80)
+            );
             ItemStack stack = mc.player.getInventory().getStack(i);
             if (!stack.isEmpty()) {
                float guiScale = mc.getWindow().getScaleFactor();
@@ -137,7 +118,7 @@ public class HotBarHUD {
             offset += 51.5F;
          }
 
-         renderOffhandSlot(r2, drawContext, x, y, hotbarWidth, hotbarHeight, selectedSlotSize, vanillaStyle);
+         renderOffhandSlot(r2, drawContext, x, y, hotbarWidth, hotbarHeight, selectedSlotSize);
          renderExperienceLevel(drawContext, x, y, hotbarWidth);
          if (mc.interactionManager != null && mc.interactionManager.hasStatusBars()) {
             renderStatusBars(drawContext, x, y, hotbarHeight);
@@ -369,7 +350,7 @@ public class HotBarHUD {
    }
 
    private static void renderOffhandSlot(
-      Renderer2D r2, DrawContext drawContext, float hotbarX, float hotbarY, float hotbarWidth, float hotbarHeight, float slotSize, boolean vanillaStyle
+      Renderer2D r2, DrawContext drawContext, float hotbarX, float hotbarY, float hotbarWidth, float hotbarHeight, float slotSize
    ) {
       if (mc.player != null) {
          ItemStack offhandStack = mc.player.getOffHandStack();
@@ -384,11 +365,7 @@ public class HotBarHUD {
                offhandSlotX = hotbarX + hotbarWidth + offhandGap;
             }
 
-            Hud.drawClientRect(r2, offhandSlotX, hotbarY, slotSize, slotSize, vanillaStyle ? 2.0F : 13.0F, 1.0F, 1.0F);
-            if (vanillaStyle) {
-               r2.rect(offhandSlotX, hotbarY, slotSize, slotSize, 2.0F, Renderer2D.ColorUtil.replAlpha(0x222222, 190));
-               r2.rectOutline(offhandSlotX, hotbarY, slotSize, slotSize, 2.0F, Renderer2D.ColorUtil.replAlpha(0x8B8B8B, 190), 1.0F);
-            }
+            Hud.drawClientRect(r2, offhandSlotX, hotbarY, slotSize, slotSize, 13.0F, 1.0F, 1.0F);
             float guiScale = mc.getWindow().getScaleFactor();
             float itemScale = 1.0F;
             float itemRenderSize = 16.0F * itemScale;

@@ -40,159 +40,30 @@ public class GuiMouseClickedModule extends GuiScreen {
 
          int index = 1;
          float downY = GuiScreen.getScrollUtil().getScroll();
-         float downYSetting1 = 0.0F;
-         float downYSetting2 = 0.0F;
+         float[] columnSettingsHeights = { 0.0F, 0.0F };
 
          for (Module module : filteredModules) {
             float settingsAnim = GuiScreen.getModuleSettingsAnimation(module).get();
             float settingsAlphaAnim = GuiScreen.getModuleSettingsAlphaAnimation(module).get();
             boolean settingsShowing = GuiScreen.openSettingsModules.contains(module) || settingsAnim > 0.0F || settingsAlphaAnim > 0.0F;
-            float settingsHeight = 12.0F;
-            if (settingsShowing) {
-               float fullSettingsHeight = 12.0F;
-               for (Setting setting : module.getSettingsForGUI()) {
-                  fullSettingsHeight += GuiRenderSetting.getSettingHeight(renderer2D, setting) + 1.0F;
-               }
+            float settingsHeight = GuiRenderSetting.getAnimatedSettingsHeight(renderer2D, module.getSettingsForGUI(), settingsAnim, settingsShowing);
 
-               fullSettingsHeight = Math.max(fullSettingsHeight, 20.0F);
-               settingsHeight = 12.0F + (fullSettingsHeight - 12.0F) * settingsAnim;
+            int column = index % 2 == 0 ? 1 : 0;
+            float columnX = column == 1 ? MODULE_COLUMN_2_X : MODULE_COLUMN_1_X;
+            float moduleX = GuiScreen.x + columnX;
+            float moduleY = GuiScreen.y + MODULE_CARD_TOP + downY + columnSettingsHeights[column]
+                  - (column == 1 ? MODULE_COLUMN_STAGGER : 0.0F);
+
+            if (handleModuleClickAt(renderer2D, module, moduleX, moduleY, mouseX, mouseY, pButton)) {
+               return true;
             }
 
-            if (index % 2 == 0) {
-               float currentDownY = downY + downYSetting2 - 30.0F;
-               float moduleX = GuiScreen.x + 266.35F;
-               float moduleY = GuiScreen.y + 55.365F + currentDownY;
-               float moduleWidth = 150.0F;
-               float moduleHeight = 21.325F;
-               if (GuiScreen.openSettingsModules.contains(module) && pButton == 0) {
-                  float settingY = GuiScreen.y + 76.69F + currentDownY + 4.0F;
-                  float settingX = GuiScreen.x + 275.35F;
-                  float settingWidth = 132.47F;
-                  float totalSettingsHeight = 0.0F;
+            if (settingsShowing) {
+               columnSettingsHeights[column] += settingsHeight;
+            }
 
-                  for (Setting setting : module.getSettingsForGUI()) {
-                     float actualSettingY = settingY + totalSettingsHeight;
-                     if (GuiMouseClickedSetting.handleSettingClick(renderer2D, setting, settingX, actualSettingY, settingWidth, mouseX, mouseY, pButton)) {
-                        return true;
-                     }
-
-                     totalSettingsHeight += GuiRenderSetting.getSettingHeight(renderer2D, setting) + 1.0F;
-                  }
-               }
-
-               if (settingsShowing) {
-                  downYSetting2 += settingsHeight;
-               }
-
-               if (handleBindPillClick(renderer2D, module, GuiScreen.x + 280.35F, GuiScreen.y + 61.555F + currentDownY, mouseX, mouseY, pButton)) {
-                  return true;
-               }
-
-               if (GuiRenderMain.isHovered(mouseX, mouseY, moduleX, moduleY, moduleWidth, moduleHeight) && pButton == 0) {
-                  if (module.holdOnly) {
-                     GuiScreen.wobbleBindPill(module);
-                  } else {
-                     module.toggle();
-                  }
-               }
-
-               if (GuiRenderMain.isHovered(mouseX, mouseY, moduleX, moduleY, moduleWidth, moduleHeight)
-                  && pButton == 1
-                  && !module.getSettingsForGUI().isEmpty()) {
-                  if (GuiScreen.openSettingsModules.contains(module)) {
-                     GuiScreen.closeModuleSettings(module);
-                  } else {
-                     GuiScreen.openModuleSettings(module);
-                  }
-               }
-
-               if (GuiRenderMain.isHovered(mouseX, mouseY, moduleX, moduleY, moduleWidth, moduleHeight) && pButton == 2) {
-                  if (module.binding) {
-                     module.binding = false;
-                     GuiScreen.activeModuleBind = null;
-                     GuiScreen.getModuleBindAnimation(module).run(0.0, 0.2F, Easings.SINE_OUT);
-                  } else {
-                     if (GuiScreen.activeModuleBind != null) {
-                        GuiScreen.activeModuleBind.binding = false;
-                        GuiScreen.getModuleBindAnimation(GuiScreen.activeModuleBind).run(0.0, 0.2F, Easings.SINE_OUT);
-                     }
-
-                     GuiScreen.activeModuleBind = module;
-                     module.binding = true;
-                     GuiScreen.getModuleBindAnimation(module).run(1.0, 0.2F, Easings.SINE_OUT);
-                  }
-
-                  return true;
-               }
-
-            } else {
-               float currentDownYx = downY + downYSetting1;
-               float moduleXx = GuiScreen.x + 111.885F;
-               float moduleYx = GuiScreen.y + 55.365F + currentDownYx;
-               float moduleWidthx = 150.0F;
-               float moduleHeightx = 21.325F;
-               if (GuiScreen.openSettingsModules.contains(module) && pButton == 0) {
-                  float settingY = GuiScreen.y + 76.69F + currentDownYx + 4.0F;
-                  float settingX = GuiScreen.x + 111.885F + 9.0F;
-                  float settingWidth = 132.47F;
-                  float totalSettingsHeight = 0.0F;
-
-                  for (Setting setting : module.getSettingsForGUI()) {
-                     float actualSettingY = settingY + totalSettingsHeight;
-                     if (GuiMouseClickedSetting.handleSettingClick(renderer2D, setting, settingX, actualSettingY, settingWidth, mouseX, mouseY, pButton)) {
-                        return true;
-                     }
-
-                     totalSettingsHeight += GuiRenderSetting.getSettingHeight(renderer2D, setting) + 1.0F;
-                  }
-               }
-
-               if (settingsShowing) {
-                  downYSetting1 += settingsHeight;
-               }
-
-               if (handleBindPillClick(renderer2D, module, GuiScreen.x + 125.885F, GuiScreen.y + 61.555F + currentDownYx, mouseX, mouseY, pButton)) {
-                  return true;
-               }
-
-               if (GuiRenderMain.isHovered(mouseX, mouseY, moduleXx, moduleYx, moduleWidthx, moduleHeightx) && pButton == 0) {
-                  if (module.holdOnly) {
-                     GuiScreen.wobbleBindPill(module);
-                  } else {
-                     module.toggle();
-                  }
-               }
-
-               if (GuiRenderMain.isHovered(mouseX, mouseY, moduleXx, moduleYx, moduleWidthx, moduleHeightx)
-                  && pButton == 1
-                  && !module.getSettingsForGUI().isEmpty()) {
-                  if (GuiScreen.openSettingsModules.contains(module)) {
-                     GuiScreen.closeModuleSettings(module);
-                  } else {
-                     GuiScreen.openModuleSettings(module);
-                  }
-               }
-
-               if (GuiRenderMain.isHovered(mouseX, mouseY, moduleXx, moduleYx, moduleWidthx, moduleHeightx) && pButton == 2) {
-                  if (module.binding) {
-                     module.binding = false;
-                     GuiScreen.activeModuleBind = null;
-                     GuiScreen.getModuleBindAnimation(module).run(0.0, 1.0, Easings.SINE_OUT);
-                  } else {
-                     if (GuiScreen.activeModuleBind != null) {
-                        GuiScreen.activeModuleBind.binding = false;
-                        GuiScreen.getModuleBindAnimation(GuiScreen.activeModuleBind).run(0.0, 1.0, Easings.SINE_OUT);
-                     }
-
-                     GuiScreen.activeModuleBind = module;
-                     module.binding = true;
-                     GuiScreen.getModuleBindAnimation(module).run(1.0, 1.0, Easings.SINE_OUT);
-                  }
-
-                  return true;
-               }
-
-               downY += 30.325F;
+            if (column == 0) {
+               downY += MODULE_ROW_PITCH;
             }
 
             index++;
@@ -200,6 +71,67 @@ public class GuiMouseClickedModule extends GuiScreen {
 
          return false;
       }
+   }
+
+   private static boolean handleModuleClickAt(Renderer2D renderer2D, Module module, float moduleX, float moduleY, int mouseX, int mouseY, int pButton) {
+      if (GuiScreen.openSettingsModules.contains(module) && pButton == 0) {
+         float settingY = moduleY + MODULE_CARD_HEIGHT + MODULE_SETTING_GAP;
+         float settingX = moduleX + MODULE_SETTING_INSET_X;
+         float settingWidth = SETTING_WIDTH;
+         float totalSettingsHeight = 0.0F;
+
+         for (Setting setting : module.getSettingsForGUI()) {
+            float actualSettingY = settingY + totalSettingsHeight;
+            if (GuiMouseClickedSetting.handleSettingClick(renderer2D, setting, settingX, actualSettingY, settingWidth, mouseX, mouseY, pButton)) {
+               return true;
+            }
+
+            totalSettingsHeight += GuiRenderSetting.getSettingHeight(renderer2D, setting) + 1.0F;
+         }
+      }
+
+      if (handleBindPillClick(renderer2D, module, moduleX + MODULE_NAME_OFFSET_X, moduleY + MODULE_NAME_OFFSET_Y, mouseX, mouseY, pButton)) {
+         return true;
+      }
+
+      if (GuiRenderMain.isHovered(mouseX, mouseY, moduleX, moduleY, MODULE_CARD_WIDTH, MODULE_CARD_HEIGHT) && pButton == 0) {
+         if (module.holdOnly) {
+            GuiScreen.wobbleBindPill(module);
+         } else {
+            module.toggle();
+         }
+      }
+
+      if (GuiRenderMain.isHovered(mouseX, mouseY, moduleX, moduleY, MODULE_CARD_WIDTH, MODULE_CARD_HEIGHT)
+         && pButton == 1
+         && !module.getSettingsForGUI().isEmpty()) {
+         if (GuiScreen.openSettingsModules.contains(module)) {
+            GuiScreen.closeModuleSettings(module);
+         } else {
+            GuiScreen.openModuleSettings(module);
+         }
+      }
+
+      if (GuiRenderMain.isHovered(mouseX, mouseY, moduleX, moduleY, MODULE_CARD_WIDTH, MODULE_CARD_HEIGHT) && pButton == 2) {
+         if (module.binding) {
+            module.binding = false;
+            GuiScreen.activeModuleBind = null;
+            GuiScreen.getModuleBindAnimation(module).run(0.0, 0.2F, Easings.SINE_OUT);
+         } else {
+            if (GuiScreen.activeModuleBind != null) {
+               GuiScreen.activeModuleBind.binding = false;
+               GuiScreen.getModuleBindAnimation(GuiScreen.activeModuleBind).run(0.0, 0.2F, Easings.SINE_OUT);
+            }
+
+            GuiScreen.activeModuleBind = module;
+            module.binding = true;
+            GuiScreen.getModuleBindAnimation(module).run(1.0, 0.2F, Easings.SINE_OUT);
+         }
+
+         return true;
+      }
+
+      return false;
    }
 
    private static boolean handleBindPillClick(Renderer2D renderer2D, Module module, float moduleNameX, float moduleNameY, int mouseX, int mouseY, int pButton) {
@@ -253,66 +185,39 @@ public class GuiMouseClickedModule extends GuiScreen {
       } else {
          int index = 1;
          float downY = GuiScreen.getScrollUtil().getScroll();
-         float downYSetting1 = 0.0F;
-         float downYSetting2 = 0.0F;
+         float[] columnSettingsHeights = { 0.0F, 0.0F };
 
          for (Module module : GuiScreen.modules) {
             float settingsAnim = GuiScreen.getModuleSettingsAnimation(module).get();
             float settingsAlphaAnim = GuiScreen.getModuleSettingsAlphaAnimation(module).get();
             boolean settingsShowing = GuiScreen.openSettingsModules.contains(module) || settingsAnim > 0.0F || settingsAlphaAnim > 0.0F;
-            float settingsHeight = 12.0F;
+            float settingsHeight = GuiRenderSetting.getAnimatedSettingsHeight(renderer2D, module.getSettingsForGUI(), settingsAnim, settingsShowing);
+
+            int column = index % 2 == 0 ? 1 : 0;
+            float columnX = column == 1 ? MODULE_COLUMN_2_X : MODULE_COLUMN_1_X;
+            float moduleY = GuiScreen.y + MODULE_CARD_TOP + downY + columnSettingsHeights[column]
+                  - (column == 1 ? MODULE_COLUMN_STAGGER : 0.0F);
+
             if (settingsShowing) {
-               float fullSettingsHeight = 12.0F;
+               float settingY = moduleY + MODULE_CARD_HEIGHT + MODULE_SETTING_GAP;
+               float settingX = GuiScreen.x + columnX + MODULE_SETTING_INSET_X;
+               float totalSettingsHeight = 0.0F;
+
                for (Setting setting : module.getSettingsForGUI()) {
-                  fullSettingsHeight += GuiRenderSetting.getSettingHeight(renderer2D, setting) + 1.0F;
+                  if (setting == hueSetting) {
+                     float pickerX = settingX + SETTING_WIDTH - 15.0F;
+                     float pickerY = settingY + totalSettingsHeight * settingsAlphaAnim - 5.0F;
+                     return new float[]{pickerX, pickerY};
+                  }
+
+                  totalSettingsHeight += GuiRenderSetting.getSettingHeight(renderer2D, setting) + 1.0F;
                }
 
-               fullSettingsHeight = Math.max(fullSettingsHeight, 20.0F);
-               settingsHeight = 12.0F + (fullSettingsHeight - 12.0F) * settingsAnim;
+               columnSettingsHeights[column] += settingsHeight;
             }
 
-            if (index % 2 == 0) {
-               float currentDownY = downY + downYSetting2 - 30.0F;
-               if (settingsShowing) {
-                  float settingY = GuiScreen.y + 76.69F + currentDownY + 4.0F;
-                  float settingX = GuiScreen.x + 275.35F;
-                  float settingWidth = 132.47F;
-                  float totalSettingsHeight = 0.0F;
-
-                  for (Setting setting : module.getSettingsForGUI()) {
-                     if (setting == hueSetting) {
-                        float pickerX = settingX + settingWidth - 15.0F;
-                        float pickerY = settingY + totalSettingsHeight * settingsAlphaAnim - 5.0F;
-                        return new float[]{pickerX, pickerY};
-                     }
-
-                     totalSettingsHeight += GuiRenderSetting.getSettingHeight(renderer2D, setting) + 1.0F;
-                  }
-
-                  downYSetting2 += settingsHeight;
-               }
-            } else {
-               float currentDownY = downY + downYSetting1;
-               if (settingsShowing) {
-                  float settingY = GuiScreen.y + 76.69F + currentDownY + 4.0F;
-                  float settingX = GuiScreen.x + 111.885F + 9.0F;
-                  float settingWidth = 132.47F;
-                  float totalSettingsHeight = 0.0F;
-
-                  for (Setting setting : module.getSettingsForGUI()) {
-                     if (setting == hueSetting) {
-                        float pickerX = settingX + settingWidth - 15.0F;
-                        float pickerY = settingY + totalSettingsHeight * settingsAlphaAnim - 5.0F;
-                        return new float[]{pickerX, pickerY};
-                     }
-
-                     totalSettingsHeight += GuiRenderSetting.getSettingHeight(renderer2D, setting) + 1.0F;
-                  }
-
-                  downYSetting1 += settingsHeight;
-               }
-
-               downY += 30.325F;
+            if (column == 0) {
+               downY += MODULE_ROW_PITCH;
             }
 
             index++;
@@ -322,3 +227,4 @@ public class GuiMouseClickedModule extends GuiScreen {
       }
    }
 }
+

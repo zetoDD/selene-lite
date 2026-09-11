@@ -43,6 +43,15 @@ public final class UiIcons {
       icon(renderer, icon, centerX, centerY, size, alpha);
    }
 
+   public static void draw(Renderer2D renderer, String name, float centerX, float centerY, float size, float alpha) {
+      icon(renderer, name, centerX, centerY, size, alpha);
+   }
+
+   public static void drawTinted(Renderer2D renderer, String name, float centerX, float centerY, float size, float alpha,
+         int tintRgba) {
+      SeleneIcons.drawTinted(renderer, name, centerX, centerY, size, alpha, tintRgba);
+   }
+
    public static void search(Renderer2D renderer, float centerX, float centerY, float size, float alpha) {
       icon(renderer, "search", centerX, centerY, size, alpha);
    }

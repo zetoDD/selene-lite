@@ -16,7 +16,6 @@ public class GuiMouseReleased extends GuiScreen {
       GuiScreen.pickingHue = false;
       GuiScreen.pickingAlpha = false;
       GuiScreen.windowDragging = false;
-      GuiScreen.configPopupDragging = false;
       GuiScreen.activeSliderSetting = null;
       GuiScreen.sliderX = 0.0F;
       GuiScreen.sliderY = 0.0F;

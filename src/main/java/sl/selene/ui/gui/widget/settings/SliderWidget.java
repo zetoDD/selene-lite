@@ -11,6 +11,7 @@ import sl.selene.module.api.Module;
 import sl.selene.module.api.setting.Setting;
 import sl.selene.module.api.setting.impl.SliderSetting;
 import sl.selene.ui.Colors;
+import sl.selene.ui.gui.component.render.GlassStyle;
 import sl.selene.util.render.animation.AnimationSystem;
 import sl.selene.util.render.animation.Easings;
 import sl.selene.util.render.animation.SpringConfig;
@@ -25,6 +26,8 @@ public final class SliderWidget implements SettingWidget {
    private static final SpringConfig HOVER_SPRING = SpringConfig.of(1.4F, 0.7F);
    private static final SpringConfig PROGRESS_SPRING = SpringConfig.of(8.0F, 0.8F);
    private static final SpringConfig VISIBILITY_SPRING = SpringConfig.of(1.8F, 0.65F);
+   private static final int TRACK_COLOR = 0xFFFFFFFF;
+   private static final int KNOB_COLOR = 0xFFFFFFFF;
    private final Module module;
    private final SliderSetting setting;
    private final PopupOpenContext popupContext;
@@ -127,23 +130,16 @@ public final class SliderWidget implements SettingWidget {
                float valueBaseline = this.layoutBounds.y + 20.0F + 18.0F;
                float valueX = this.layoutBounds.x + this.layoutBounds.width - 18.0F;
                renderer.text(FontRegistry.INTER_SEMIBOLD, valueX, valueBaseline, 18.0F, this.formatCurrentValue(), textColor, "r");
-               int backgroundColor = applyAlpha(-14606047, effectiveAlpha);
-               renderer.rect(this.trackBounds.x, this.trackBounds.y, this.trackBounds.width, this.trackBounds.height, 3.0F, backgroundColor);
                float progress = clamp01(this.progressAnimator.getValue());
-               float fillWidth = this.trackBounds.width * progress;
-               if (fillWidth > 0.0F) {
-                  int activeColor = applyAlpha(Colors.getClientPrimary(), effectiveAlpha);
-                  float rightRadius = fillWidth >= this.trackBounds.width - 0.01F ? 3.0F : 0.0F;
-                  renderer.rect(this.trackBounds.x, this.trackBounds.y, fillWidth, this.trackBounds.height, 3.0F, rightRadius, rightRadius, 3.0F, activeColor);
-               }
-
-               float knobCenterX = this.trackBounds.x + fillWidth;
-               float knobCenterY = this.trackBounds.y + this.trackBounds.height * 0.5F;
-               float scale = 1.0F + clamp01(this.knobScaleAnimator.getValue()) * 0.35000002F;
-               float knobSize = 12.0F * scale;
-               float knobRadius = knobSize * 0.5F;
-               int knobColor = applyAlpha(-2500135, effectiveAlpha);
-               renderer.circle(knobCenterX, knobCenterY, knobRadius, 0.0F, 1.0F, knobColor);
+               int trackColor = applyAlpha(TRACK_COLOR, effectiveAlpha * 0.06F);
+               int fillColor = applyAlpha(Colors.getClientPrimary(), effectiveAlpha);
+               int knobColor = applyAlpha(KNOB_COLOR, effectiveAlpha);
+               GlassStyle.outline(renderer, this.trackBounds.x, this.trackBounds.y, this.trackBounds.width, this.trackBounds.height, this.trackBounds.height * 0.5F, effectiveAlpha);
+               GlassStyle.sliderTrack(renderer, this.trackBounds.x, this.trackBounds.y, this.trackBounds.width, this.trackBounds.height, trackColor, fillColor, progress);
+               float knobScale = 1.0F + clamp01(this.knobScaleAnimator.getValue()) * 0.25F;
+               float knobHeight = this.trackBounds.height * knobScale;
+               float knobY = this.trackBounds.y + (this.trackBounds.height - knobHeight) * 0.5F;
+               GlassStyle.sliderKnob(renderer, GlassStyle.sliderKnobX(this.trackBounds.x, this.trackBounds.width, progress), knobY, knobHeight, knobColor);
             } finally {
                renderer.popScale();
             }

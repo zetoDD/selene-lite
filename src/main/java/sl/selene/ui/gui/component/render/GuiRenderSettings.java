@@ -21,7 +21,14 @@ public final class GuiRenderSettings extends GuiScreen {
    private static final float TOGGLE_Y = 97.0F;
    private static final float TOGGLE_H = 22.0F;
    private static final float TOGGLE_W = 34.0F;
-   private static final float HUD_TEXT_Y = 57.0F;
+   private static final float HUD_MODE_Y = 57.0F;
+   private static final float MODE_W = 104.0F;
+   private static final float MODE_H = 20.0F;
+   private static final float MODE_GAP = 3.0F;
+   private static final float MODE_ROW_RADIUS = 6.5F;
+   private static final float MODE_CHIP_RADIUS = 5.5F;
+   private static final float MODE_CHIP_WASH = 44.0F;
+   private static final String[] BAR_MODES = { "Top", "Bottom" };
 
    private static final float BLUR_ROW_Y = 57.0F;
 
@@ -76,7 +83,7 @@ public final class GuiRenderSettings extends GuiScreen {
          }
          drawCategoryIcon(renderer, i, rowX + 11.0F, rowY + NAV_ROW_HEIGHT * 0.5F, 7.5F, alpha * (selected ? 1.0F : 0.6F));
          int navTextColor = Renderer2D.ColorUtil.replAlpha(textColor, (int)(255.0F * alpha));
-         renderer.text(FontRegistry.INTER_MEDIUM, rowX + 24.0F, rowY + 15.5F, 10.0F, GuiScreen.SETTINGS_CATEGORIES[i], navTextColor);
+         renderer.text(FontRegistry.INTER_MEDIUM, rowX + 24.0F, rowY + 15.5F, 12.0F, GuiScreen.SETTINGS_CATEGORIES[i], navTextColor);
       }
 
       float backY = GuiScreen.y + 225.0F;
@@ -97,9 +104,8 @@ public final class GuiRenderSettings extends GuiScreen {
       }
 
       if (isSettingsFooterHovered(mouseX, mouseY)) {
-         GuiScreen.settingsPageOpen = false;
          GuiScreen.selectedSettingsCategory = 0;
-         GuiScreen.configInputActive = false;
+         GuiScreen.selectTab(GuiScreen.TAB_MODULES);
          return true;
       }
 
@@ -114,11 +120,13 @@ public final class GuiRenderSettings extends GuiScreen {
       }
 
       if (GuiScreen.selectedSettingsCategory == 2) {
-         float toggleX = cardX() + cardWidth() - CARD_PADDING - TOGGLE_W;
-         float textToggleY = GuiScreen.y + CARD_TOP + HUD_TEXT_Y;
-         if (GuiRenderMain.isHovered(mouseX, mouseY, toggleX, textToggleY, TOGGLE_W, TOGGLE_H)) {
-            GuiScreen.plainArrayList = !GuiScreen.plainArrayList;
-            saveGuiSettings();
+         int modeSegment = modeSegmentAt(mouseX, mouseY);
+         if (modeSegment >= 0) {
+            boolean belowFrame = modeSegment == 1;
+            if (GuiScreen.topBarAtBottom != belowFrame) {
+               GuiScreen.topBarAtBottom = belowFrame;
+               saveGuiSettings();
+            }
             return true;
          }
       }
@@ -165,11 +173,49 @@ public final class GuiRenderSettings extends GuiScreen {
    private static void renderHud(Renderer2D renderer, float x, float y, float width, float alpha) {
       int textColor = Renderer2D.ColorUtil.replAlpha(Renderer2D.ColorUtil.getTextColor(1, 1), (int)(235.0F * alpha));
       int muted = Renderer2D.ColorUtil.replAlpha(Renderer2D.ColorUtil.getTextTwoColor(1, 1), (int)(255.0F * alpha));
-      float textRowY = y + HUD_TEXT_Y;
-      UiIcons.info(renderer, x + CARD_PADDING + 8.0F, textRowY + 3.0F, 10.5F, alpha);
-      renderer.text(FontRegistry.INTER_MEDIUM, x + CARD_PADDING + 25.0F, textRowY + 1.0F, 13.0F, "Plain Text Array List", textColor);
-      renderer.text(FontRegistry.INTER_MEDIUM, x + CARD_PADDING + 25.0F, textRowY + 14.0F, 11.0F, "Lightweight text-only module list", muted);
-      drawToggle(renderer, x + width - CARD_PADDING - TOGGLE_W, textRowY + 2.0F, alpha, GuiScreen.plainArrayList, GuiScreen.toggleHudTextAnim);
+      float modeY = y + HUD_MODE_Y;
+      UiIcons.draw(renderer, "layout", x + CARD_PADDING + 8.0F, modeY + 3.0F, 10.5F, alpha);
+      renderer.text(FontRegistry.INTER_MEDIUM, x + CARD_PADDING + 25.0F, modeY + 1.0F, 13.0F, "Top Bar", textColor);
+      renderer.text(FontRegistry.INTER_MEDIUM, x + CARD_PADDING + 25.0F, modeY + 14.0F, 11.0F, "Where the tab bar sits", muted);
+      drawModeSelector(renderer, modeSelectorX(), modeY, alpha);
+   }
+
+   private static float modeSelectorX() {
+      return cardX() + cardWidth() - CARD_PADDING - MODE_W;
+   }
+
+   private static void drawModeSelector(Renderer2D renderer, float x, float y, float alpha) {
+      int active = GuiScreen.topBarAtBottom ? 1 : 0;
+      float segmentWidth = (MODE_W - MODE_GAP) * 0.5F;
+      GlassStyle.panel(renderer, x, y, MODE_W, MODE_H, MODE_ROW_RADIUS, MODE_ROW_RADIUS, MODE_ROW_RADIUS, MODE_ROW_RADIUS, alpha * 0.9F);
+      for (int i = 0; i < BAR_MODES.length; i++) {
+         float segmentX = x + i * (segmentWidth + MODE_GAP);
+         boolean selected = i == active;
+         if (selected) {
+            float chipY = y + 1.0F;
+            float chipHeight = MODE_H - 2.0F;
+            GlassStyle.fill(renderer, segmentX, chipY, segmentWidth, chipHeight, MODE_CHIP_RADIUS, alpha * 0.95F);
+            renderer.rect(segmentX + 1.0F, chipY + 1.0F, segmentWidth - 2.0F, chipHeight - 2.0F, MODE_CHIP_RADIUS,
+                  Renderer2D.ColorUtil.rgba(255, 255, 255, (int)(MODE_CHIP_WASH * alpha)));
+            GlassStyle.outline(renderer, segmentX, chipY, segmentWidth, chipHeight, MODE_CHIP_RADIUS, alpha);
+         }
+
+         int color = selected
+               ? Renderer2D.ColorUtil.replAlpha(Renderer2D.ColorUtil.getTextColor(1, 1), (int)(255.0F * alpha))
+               : Renderer2D.ColorUtil.replAlpha(Renderer2D.ColorUtil.getTextTwoColor(1, 1), (int)(255.0F * alpha));
+         float textWidth = renderer.measureText(FontRegistry.INTER_MEDIUM, BAR_MODES[i], 11.0F).width;
+         renderer.text(FontRegistry.INTER_MEDIUM, segmentX + (segmentWidth - textWidth) * 0.5F, y + 11.0F, 11.0F, BAR_MODES[i], color);
+      }
+   }
+
+   private static int modeSegmentAt(float mouseX, float mouseY) {
+      float selectorX = modeSelectorX();
+      float selectorY = GuiScreen.y + CARD_TOP + HUD_MODE_Y;
+      if (!GuiRenderMain.isHovered(mouseX, mouseY, selectorX, selectorY, MODE_W, MODE_H)) {
+         return -1;
+      }
+
+      return mouseX - selectorX < MODE_W * 0.5F ? 0 : 1;
    }
 
    private static void drawToggle(Renderer2D renderer, float x, float y, float alpha, boolean on, sl.selene.util.render.math.animation.anim.util.Animation2 anim) {

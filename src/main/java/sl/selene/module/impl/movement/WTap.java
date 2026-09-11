@@ -24,7 +24,7 @@ public class WTap extends Module {
 
    public static SliderSetting chance = new SliderSetting("Chance", 100.0F, 0.0F, 100.0F, 1.0F, true);
    public static SliderSetting tapTicks = new SliderSetting("Tap Ticks", 2.0F, 1.0F, 6.0F, 1.0F, false);
-   public static SliderSetting delayTicks = new SliderSetting("Delay Ticks", 1.0F, 0.0F, 4.0F, 1.0F, false);
+   public static SliderSetting delayTicks = new SliderSetting("Delay Ticks", 1.0F, 1.0F, 4.0F, 1.0F, false);
    public static BooleanSetting onlyOnGround = new BooleanSetting("Only On Ground", false);
    public static BooleanSetting onlyWeapon = new BooleanSetting("Only Weapon", true);
 

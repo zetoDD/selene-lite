@@ -37,6 +37,7 @@
     "PlayerListEntryMixin",
     "InGameHudMixin",
     "InGameHudCrosshairMixin",
+    "BossBarHudMixin",
     "ChatHudMixin",
     "ScoreboardMixin",
     "ScoreboardEntryMixin",

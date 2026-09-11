@@ -1,6 +1,5 @@
 package sl.selene.ui.gui.component.render;
 
-import java.awt.Color;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -24,6 +23,10 @@ import sl.selene.util.render.utils.KeyUtil;
 
 @Environment(EnvType.CLIENT)
 public class GuiRenderMain extends GuiScreen {
+
+   private record Palette(int outline, int main, int main6, int main40, int text) {
+   }
+
    public static void renderMain(Renderer2D renderer2D, MatrixStack pose, int mouseX, int mouseY, float mainAlpha) {
       if (mainAlpha <= 0.001F) {
          return;
@@ -70,25 +73,13 @@ public class GuiRenderMain extends GuiScreen {
          GuiScreen.firstBackspacePressTime = 0L;
       }
 
-      int outlineColor = Renderer2D.ColorUtil.replAlpha(Renderer2D.ColorUtil.getOutLineColor(1, 1), (int)(20.4F * mainAlpha));
-      int backGroundThreeColor = Renderer2D.ColorUtil.replAlpha(Renderer2D.ColorUtil.getMainColor(1, 1), (int)(10.2F * mainAlpha));
-      int mainColor = Renderer2D.ColorUtil.replAlpha(Renderer2D.ColorUtil.getMainColor(1, 1), (int)(255.0F * mainAlpha));
-      int mainColor6 = Renderer2D.ColorUtil.replAlpha(Renderer2D.ColorUtil.getMainColor(1, 1), (int)(15.3F * mainAlpha));
-      int mainColor40 = Renderer2D.ColorUtil.replAlpha(Renderer2D.ColorUtil.getMainColor(1, 1), (int)(255.0F * mainAlpha));
-      int textColor = Renderer2D.ColorUtil.replAlpha(Renderer2D.ColorUtil.getTextColor(1, 1), (int)(255.0F * mainAlpha));
+      Palette palette = new Palette(
+            Renderer2D.ColorUtil.replAlpha(Renderer2D.ColorUtil.getOutLineColor(1, 1), (int)(20.4F * mainAlpha)),
+            Renderer2D.ColorUtil.replAlpha(Renderer2D.ColorUtil.getMainColor(1, 1), (int)(255.0F * mainAlpha)),
+            Renderer2D.ColorUtil.replAlpha(Renderer2D.ColorUtil.getMainColor(1, 1), (int)(15.3F * mainAlpha)),
+            Renderer2D.ColorUtil.replAlpha(Renderer2D.ColorUtil.getMainColor(1, 1), (int)(255.0F * mainAlpha)),
+            Renderer2D.ColorUtil.replAlpha(Renderer2D.ColorUtil.getTextColor(1, 1), (int)(255.0F * mainAlpha)));
       int backGroundOneColor = Renderer2D.ColorUtil.replAlpha(Renderer2D.ColorUtil.getBackGroundColor(1, 1), (int)(178.5F * mainAlpha));
-      Color mainColorGlow35 = Renderer2D.ColorUtil.getColor(Renderer2D.ColorUtil.replAlpha(Renderer2D.ColorUtil.getMainColor(1, 1), (int)(56.0F * mainAlpha)));
-      boolean vanillaStyle = GuiScreen.isVanillaStyle();
-      if (vanillaStyle) {
-         outlineColor = Renderer2D.ColorUtil.replAlpha(new Color(86, 86, 86).getRGB(), (int)(190.0F * mainAlpha));
-         backGroundThreeColor = Renderer2D.ColorUtil.replAlpha(new Color(57, 57, 57).getRGB(), (int)(220.0F * mainAlpha));
-         mainColor = Renderer2D.ColorUtil.replAlpha(new Color(170, 170, 170).getRGB(), (int)(255.0F * mainAlpha));
-         mainColor6 = Renderer2D.ColorUtil.replAlpha(new Color(95, 95, 95).getRGB(), (int)(230.0F * mainAlpha));
-         mainColor40 = Renderer2D.ColorUtil.replAlpha(new Color(138, 138, 138).getRGB(), (int)(255.0F * mainAlpha));
-         textColor = Renderer2D.ColorUtil.replAlpha(new Color(230, 230, 230).getRGB(), (int)(255.0F * mainAlpha));
-         backGroundOneColor = Renderer2D.ColorUtil.replAlpha(new Color(44, 44, 44).getRGB(), (int)(225.0F * mainAlpha));
-         mainColorGlow35 = new Color(0, 0, 0, 0);
-      }
       float x1 = GuiScreen.x + GuiScreen.SIDEBAR_WIDTH;
       float y1 = GuiScreen.y + GuiScreen.CONTENT_TOP;
       float rectWidth = GuiScreen.width - GuiScreen.SIDEBAR_WIDTH;
@@ -129,37 +120,27 @@ public class GuiRenderMain extends GuiScreen {
          module.animation.update();
          module.animation.run(module.enable ? 1.0 : 0.0, 0.15F, Easings.SINE_OUT);
          module.animation1.setDirection(module.enable ? Direction.FORWARDS : Direction.BACKWARDS);
-         float animPC = module.animation.get();
-         float settingsHeight = 12.0F;
-         float fullSettingsHeight = 12.0F;
          float settingsAnim = GuiScreen.getModuleSettingsAnimation(module).get();
          float settingsAlphaAnim = GuiScreen.getModuleSettingsAlphaAnimation(module).get();
-         if (GuiScreen.openSettingsModules.contains(module) || settingsAnim > 0.0F || settingsAlphaAnim > 0.0F) {
-            List<Setting> moduleSettings = settingsCache.get(module);
-            for (Setting setting : moduleSettings) {
-               fullSettingsHeight += GuiRenderSetting.getSettingHeight(renderer2D, setting) + 1.0F;
-            }
-
-            fullSettingsHeight = Math.max(fullSettingsHeight, 20.0F);
-            settingsHeight = 12.0F + (fullSettingsHeight - 12.0F) * settingsAnim;
-         }
+         boolean expanded = GuiScreen.openSettingsModules.contains(module) || settingsAnim > 0.0F || settingsAlphaAnim > 0.0F;
+         float settingsHeight = GuiRenderSetting.getAnimatedSettingsHeight(renderer2D, settingsCache.get(module), settingsAnim, expanded);
          settingsHeightCache.put(module, settingsHeight);
+         float cardHeight = MODULE_CARD_HEIGHT + (expanded ? settingsHeight : 0.0F);
 
          if (calcIndex % 2 == 0) {
-            float currentDownY = calcDownY + calcDownYSetting2 - 30.0F;
-            float moduleHeight = 21.325F;
-            moduleHeight += settingsHeight;
-            float totalY = currentDownY + moduleHeight;
-            maxHeightColumn2 = Math.max(maxHeightColumn2, totalY);
-            calcDownYSetting2 += settingsHeight;
+            float currentDownY = calcDownY + calcDownYSetting2 - MODULE_COLUMN_STAGGER;
+            maxHeightColumn2 = Math.max(maxHeightColumn2, currentDownY + cardHeight);
+            if (expanded) {
+               calcDownYSetting2 += settingsHeight;
+            }
          } else {
             float currentDownY = calcDownY + calcDownYSetting1;
-            float moduleHeight = 21.325F;
-            moduleHeight += settingsHeight;
-            float totalY = currentDownY + moduleHeight;
-            maxHeightColumn1 = Math.max(maxHeightColumn1, totalY);
-            calcDownYSetting1 += settingsHeight;
-            calcDownY += 30.325F;
+            maxHeightColumn1 = Math.max(maxHeightColumn1, currentDownY + cardHeight);
+            if (expanded) {
+               calcDownYSetting1 += settingsHeight;
+            }
+
+            calcDownY += MODULE_ROW_PITCH;
          }
 
          calcIndex++;
@@ -167,217 +148,36 @@ public class GuiRenderMain extends GuiScreen {
 
       float totalHeight = Math.max(maxHeightColumn1, maxHeightColumn2);
       float contentHeight = totalHeight + 8.0F;
-      float x2 = GuiScreen.x + GuiScreen.SIDEBAR_WIDTH;
-      float y2 = GuiScreen.y + GuiScreen.CONTENT_TOP;
       boolean check = isHovered(mouseX, mouseY, GuiScreen.x, GuiScreen.y, GuiScreen.width, GuiScreen.height);
       GuiScreen.getScrollUtil().setSpeed(6.0F);
       GuiScreen.getScrollUtil().setEnabled(check);
       GuiScreen.getScrollUtil().update();
       GuiScreen.getScrollUtil().setMax(contentHeight, rectHeight - 10.0F);
-      float yShar = -0.35F;
-      float yZnar = -0.7F;
       int index = 1;
       float downY = GuiScreen.getScrollUtil().getScroll();
-      float downYSetting1 = 0.0F;
-      float downYSetting2 = 0.0F;
+      float[] columnSettingsHeights = { 0.0F, 0.0F };
 
       for (Module module : filteredModules) {
-         if (index % 2 == 0) {
-            float animPCx = module.animation.get();
-            float currentDownY = downY + downYSetting2 - 30.0F;
-            float settingsAnimx = GuiScreen.getModuleSettingsAnimation(module).get();
-            float settingsAlphaAnimx = GuiScreen.getModuleSettingsAlphaAnimation(module).get();
-            float settingsHeightx = settingsHeightCache.getOrDefault(module, 12.0F);
-            List<Setting> moduleSettings = settingsCache.get(module);
+         int column = index % 2 == 0 ? 1 : 0;
+         float columnX = column == 1 ? MODULE_COLUMN_2_X : MODULE_COLUMN_1_X;
+         float stagger = column == 1 ? MODULE_COLUMN_STAGGER : 0.0F;
+         float cardX = GuiScreen.x + columnX;
+         float cardY = GuiScreen.y + MODULE_CARD_TOP + downY + columnSettingsHeights[column] - stagger;
+         float settingsAnim = GuiScreen.getModuleSettingsAnimation(module).get();
+         float settingsAlphaAnim = GuiScreen.getModuleSettingsAlphaAnimation(module).get();
+         boolean settingsVisible = settingsAnim > 0.0F || settingsAlphaAnim > 0.0F;
+         float settingsHeight = settingsHeightCache.getOrDefault(module, SETTINGS_COLLAPSED_HEIGHT);
+         float enableProgress = module.animation.get();
 
-            renderer2D.shadow(GuiScreen.x + 266.35F, GuiScreen.y + 55.365F + currentDownY + 1.5F, 150.0F, 21.325F, 6.5F, 5.0F, 0.4F,
-                  Renderer2D.ColorUtil.rgba(0, 0, 0, (int)(32.0F * mainAlpha)));
-            if (!(settingsAnimx > 0.0F) && !(settingsAlphaAnimx > 0.0F)) {
-               GlassStyle.card(renderer2D, GuiScreen.x + 266.35F, GuiScreen.y + 55.365F + currentDownY, 150.0F, 21.325F, mainAlpha);
-            } else {
-               GlassStyle.card(renderer2D, GuiScreen.x + 266.35F, GuiScreen.y + 55.365F + currentDownY, 150.0F, 21.325F + settingsHeightx, mainAlpha);
-               if (settingsAlphaAnimx > 0.01F) {
-                  renderer2D.rect(
-                     GuiScreen.x + 266.515F, GuiScreen.y + 76.69F + currentDownY, 150.0F, 1.0F, ColorUtil.multAlpha(outlineColor, settingsAlphaAnimx)
-                  );
-               }
-            }
-            if (animPCx > 0.01F) {
-               renderer2D.rect(GuiScreen.x + 266.35F, GuiScreen.y + 55.365F + currentDownY, 150.0F, 21.325F, 6.5F,
-                     Renderer2D.ColorUtil.rgba(255, 255, 255, (int)(7.0F * animPCx * mainAlpha)));
-            }
-            float cardHoverX = GuiScreen.easeHover(
-                  GuiScreen.cardHoverAnimations.getOrDefault(module, 0.0F),
-                  GuiRenderMain.isHovered(mouseX, mouseY, GuiScreen.x + 266.35F, GuiScreen.y + 55.365F + currentDownY, 150.0F, 21.325F)
-            );
-            GuiScreen.cardHoverAnimations.put(module, cardHoverX);
-            if (cardHoverX > 0.01F) {
-               renderer2D.rect(GuiScreen.x + 266.35F, GuiScreen.y + 55.365F + currentDownY, 150.0F, 21.325F, 6.5F,
-                     Renderer2D.ColorUtil.rgba(255, 255, 255, (int)(10.0F * cardHoverX * mainAlpha)));
-            }
-            float moduleNameX = GuiScreen.x + 280.35F;
-            float moduleNameY = GuiScreen.y + 61.555F + currentDownY;
-            renderer2D.text(FontRegistry.INTER_SEMIBOLD, moduleNameX, moduleNameY + 6.6F, 14.0F, module.name, textColor);
+         renderModuleCard(renderer2D, module, settingsCache.get(module), cardX, cardY, mouseX, mouseY, mainAlpha,
+               palette, enableProgress, settingsAnim, settingsAlphaAnim, settingsHeight, settingsVisible);
 
-            float bindAnim = GuiScreen.getModuleBindAnimation(module).get();
-            float bindWobble = GuiScreen.getBindWobble(module);
-            float bindWobbleBoost = GuiScreen.getBindWobbleBoost(module);
-            float pillAlpha = Math.max(Math.max(bindAnim, module.binding ? 1.0F : 0.35F), bindWobbleBoost);
-            float keyTextAlpha = module.binding ? 1.0F : Math.max(Math.max(bindAnim, 1.0F), bindWobbleBoost);
-            float bindHeight = 10.0F;
-            String keyText = module.binding ? "..." : (module.bind != -1 ? Keyboard.keyName(module.bind) : "None");
-            float keyTextWidth = renderer2D.measureText(FontRegistry.INTER_MEDIUM, keyText, 12.0F).width;
-            float buttonWidth = Math.max(6.0F, keyTextWidth + 6.0F);
-            float moduleNameWidth = renderer2D.measureText(FontRegistry.INTER_SEMIBOLD, module.name, 14.0F).width;
-            float bindX = moduleNameX + moduleNameWidth + 6.0F + bindWobble;
-            float bindY = moduleNameY - 0.35F;
-            renderer2D.rectOutline(bindX, bindY, buttonWidth, bindHeight, 3.0F, ColorUtil.multAlpha(outlineColor, pillAlpha), 0.1F);
-            renderer2D.rect(bindX, bindY, buttonWidth, bindHeight, 3.0F, ColorUtil.multAlpha(mainColor6, pillAlpha));
-            renderer2D.text(
-               FontRegistry.INTER_MEDIUM,
-               bindX + buttonWidth / 2.0F - keyTextWidth / 2.0F - 0.2F,
-               bindY + 2.0F + 5.25F,
-               12.0F,
-               keyText,
-               ColorUtil.multAlpha(mainColor, keyTextAlpha)
-            );
-            if (bindWobbleBoost > 0.01F) {
-               renderer2D.rectOutline(bindX, bindY, buttonWidth, bindHeight, 3.0F, ColorUtil.multAlpha(textColor, bindWobbleBoost), 0.18F);
-               renderer2D.rect(bindX, bindY, buttonWidth, bindHeight, 3.0F, ColorUtil.multAlpha(textColor, bindWobbleBoost * 0.22F));
-            }
+         if (settingsVisible) {
+            columnSettingsHeights[column] += settingsHeight;
+         }
 
-            float switchW = 26.0F;
-            float switchH = 13.0F;
-            float switchX = GuiScreen.x + 382.35F;
-            float switchY = GuiScreen.y + 59.525F + currentDownY;
-            GlassStyle.toggle(renderer2D, switchX, switchY, switchW, switchH, mainAlpha, animPCx);
-            if (settingsAnimx > 0.0F || settingsAlphaAnimx > 0.0F) {
-               float settingY = GuiScreen.y + 76.69F + currentDownY + 4.0F;
-               float settingX = GuiScreen.x + 275.35F;
-               float settingWidth = 132.47F;
-               float totalSettingsHeight = 0.0F;
-
-               for (Setting setting : moduleSettings) {
-                  totalSettingsHeight += GuiRenderSetting.renderSetting(
-                        renderer2D,
-                        setting,
-                        settingX,
-                        settingY + totalSettingsHeight,
-                        settingWidth,
-                        mouseX,
-                        mouseY,
-                        ColorUtil.multAlpha(outlineColor, settingsAlphaAnimx),
-                        ColorUtil.multAlpha(mainColor, settingsAlphaAnimx),
-                        ColorUtil.multAlpha(mainColor6, settingsAlphaAnimx),
-                        ColorUtil.multAlpha(mainColor40, settingsAlphaAnimx),
-                        ColorUtil.multAlpha(textColor, settingsAlphaAnimx),
-                        mainAlpha * settingsAlphaAnimx
-                     )
-                     * settingsAlphaAnimx;
-               }
-
-               downYSetting2 += settingsHeightx;
-            }
-         } else {
-            float animPCxx = module.animation.get();
-            float currentDownYx = downY + downYSetting1;
-            float settingsAnimxx = GuiScreen.getModuleSettingsAnimation(module).get();
-            float settingsAlphaAnimxx = GuiScreen.getModuleSettingsAlphaAnimation(module).get();
-            float settingsHeightxx = settingsHeightCache.getOrDefault(module, 12.0F);
-            List<Setting> moduleSettings = settingsCache.get(module);
-
-            renderer2D.shadow(GuiScreen.x + 111.885F, GuiScreen.y + 55.365F + currentDownYx + 1.5F, 150.0F, 21.325F, 6.5F, 5.0F, 0.4F,
-                  Renderer2D.ColorUtil.rgba(0, 0, 0, (int)(32.0F * mainAlpha)));
-            if (!(settingsAnimxx > 0.0F) && !(settingsAlphaAnimxx > 0.0F)) {
-               GlassStyle.card(renderer2D, GuiScreen.x + 111.885F, GuiScreen.y + 55.365F + currentDownYx, 150.0F, 21.325F, mainAlpha);
-            } else {
-               GlassStyle.card(renderer2D, GuiScreen.x + 111.885F, GuiScreen.y + 55.365F + currentDownYx, 150.0F, 21.325F + settingsHeightxx, mainAlpha);
-               if (settingsAlphaAnimxx > 0.01F) {
-                  renderer2D.rect(
-                     GuiScreen.x + 111.885F, GuiScreen.y + 76.69F + currentDownYx, 150.0F, 1.0F, ColorUtil.multAlpha(outlineColor, settingsAlphaAnimxx)
-                  );
-               }
-            }
-            if (animPCxx > 0.01F) {
-               renderer2D.rect(GuiScreen.x + 111.885F, GuiScreen.y + 55.365F + currentDownYx, 150.0F, 21.325F, 6.5F,
-                     Renderer2D.ColorUtil.rgba(255, 255, 255, (int)(7.0F * animPCxx * mainAlpha)));
-            }
-            float cardHoverXx = GuiScreen.easeHover(
-                  GuiScreen.cardHoverAnimations.getOrDefault(module, 0.0F),
-                  GuiRenderMain.isHovered(mouseX, mouseY, GuiScreen.x + 111.885F, GuiScreen.y + 55.365F + currentDownYx, 150.0F, 21.325F)
-            );
-            GuiScreen.cardHoverAnimations.put(module, cardHoverXx);
-            if (cardHoverXx > 0.01F) {
-               renderer2D.rect(GuiScreen.x + 111.885F, GuiScreen.y + 55.365F + currentDownYx, 150.0F, 21.325F, 6.5F,
-                     Renderer2D.ColorUtil.rgba(255, 255, 255, (int)(10.0F * cardHoverXx * mainAlpha)));
-            }
-            float moduleNameXx = GuiScreen.x + 125.885F;
-            float moduleNameYx = GuiScreen.y + 61.555F + currentDownYx;
-            renderer2D.text(
-               FontRegistry.INTER_SEMIBOLD, moduleNameXx, moduleNameYx + 6.6F, 14.0F, module.name, textColor
-            );
-
-            float bindAnimx = GuiScreen.getModuleBindAnimation(module).get();
-            float bindWobble = GuiScreen.getBindWobble(module);
-            float bindWobbleBoost = GuiScreen.getBindWobbleBoost(module);
-            float pillAlphax = Math.max(Math.max(bindAnimx, module.binding ? 1.0F : 0.35F), bindWobbleBoost);
-            float keyTextAlphax = module.binding ? 1.0F : Math.max(Math.max(bindAnimx, 1.0F), bindWobbleBoost);
-            float bindHeight = 10.0F;
-            String keyText = module.binding ? "..." : (module.bind != -1 ? Keyboard.keyName(module.bind) : "None");
-            float keyTextWidth = renderer2D.measureText(FontRegistry.INTER_MEDIUM, keyText, 12.0F).width;
-            float buttonWidth = Math.max(6.0F, keyTextWidth + 6.0F);
-            float moduleNameWidth = renderer2D.measureText(FontRegistry.INTER_SEMIBOLD, module.name, 14.0F).width;
-            float bindX = moduleNameXx + moduleNameWidth + 6.0F + bindWobble;
-            float bindY = moduleNameYx - 0.35F;
-            renderer2D.rectOutline(bindX, bindY, buttonWidth, bindHeight, 3.0F, ColorUtil.multAlpha(outlineColor, pillAlphax), 0.1F);
-            renderer2D.rect(bindX, bindY, buttonWidth, bindHeight, 3.0F, ColorUtil.multAlpha(mainColor6, pillAlphax));
-            renderer2D.text(
-               FontRegistry.INTER_MEDIUM,
-               bindX + buttonWidth / 2.0F - keyTextWidth / 2.0F - 0.2F,
-               bindY + 2.0F + 5.25F,
-               12.0F,
-               keyText,
-               ColorUtil.multAlpha(mainColor, keyTextAlphax)
-            );
-            if (bindWobbleBoost > 0.01F) {
-               renderer2D.rectOutline(bindX, bindY, buttonWidth, bindHeight, 3.0F, ColorUtil.multAlpha(textColor, bindWobbleBoost), 0.18F);
-               renderer2D.rect(bindX, bindY, buttonWidth, bindHeight, 3.0F, ColorUtil.multAlpha(textColor, bindWobbleBoost * 0.22F));
-            }
-
-            float switchW = 26.0F;
-            float switchH = 13.0F;
-            float switchX = GuiScreen.x + 227.885F;
-            float switchY = GuiScreen.y + 59.525F + currentDownYx;
-            GlassStyle.toggle(renderer2D, switchX, switchY, switchW, switchH, mainAlpha, animPCxx);
-            if (settingsAnimxx > 0.0F || settingsAlphaAnimxx > 0.0F) {
-               float settingY = GuiScreen.y + 76.69F + currentDownYx + 4.0F;
-               float settingX = GuiScreen.x + 111.885F + 9.0F;
-               float settingWidth = 132.47F;
-               float totalSettingsHeight = 0.0F;
-
-               for (Setting setting : moduleSettings) {
-                  totalSettingsHeight += GuiRenderSetting.renderSetting(
-                        renderer2D,
-                        setting,
-                        settingX,
-                        settingY + totalSettingsHeight,
-                        settingWidth,
-                        mouseX,
-                        mouseY,
-                        ColorUtil.multAlpha(outlineColor, settingsAlphaAnimxx),
-                        ColorUtil.multAlpha(mainColor, settingsAlphaAnimxx),
-                        ColorUtil.multAlpha(mainColor6, settingsAlphaAnimxx),
-                        ColorUtil.multAlpha(mainColor40, settingsAlphaAnimxx),
-                        ColorUtil.multAlpha(textColor, settingsAlphaAnimxx),
-                        mainAlpha * settingsAlphaAnimxx
-                     )
-                     * settingsAlphaAnimxx;
-               }
-
-               downYSetting1 += settingsHeightxx;
-            }
-
-            downY += 30.325F;
+         if (column == 0) {
+            downY += MODULE_ROW_PITCH;
          }
 
          index++;
@@ -388,7 +188,7 @@ public class GuiRenderMain extends GuiScreen {
          renderer2D,
          GuiScreen.x + GuiScreen.width - 4.0F,
          GuiScreen.y + GuiScreen.CONTENT_TOP + 5.0F,
-         2.0F,
+         4.0F,
          GuiScreen.height - GuiScreen.CONTENT_TOP - 13.5F,
          mainAlpha
       );
@@ -398,11 +198,114 @@ public class GuiRenderMain extends GuiScreen {
             GuiScreen.activeColorPicker,
             mouseX,
             mouseY,
-            ColorUtil.multAlpha(outlineColor, GuiScreen.animation15.getOutput()),
+            ColorUtil.multAlpha(palette.outline(), GuiScreen.animation15.getOutput()),
             ColorUtil.multAlpha(backGroundOneColor, GuiScreen.animation15.getOutput()),
-            ColorUtil.multAlpha(mainColor40, GuiScreen.animation15.getOutput()),
+            ColorUtil.multAlpha(palette.main40(), GuiScreen.animation15.getOutput()),
             mainAlpha * GuiScreen.animation15.getOutput()
          );
+      }
+   }
+
+   private static void renderModuleCard(
+         Renderer2D renderer2D,
+         Module module,
+         List<Setting> moduleSettings,
+         float cardX,
+         float cardY,
+         int mouseX,
+         int mouseY,
+         float mainAlpha,
+         Palette palette,
+         float enableProgress,
+         float settingsAnim,
+         float settingsAlphaAnim,
+         float settingsHeight,
+         boolean settingsVisible
+   ) {
+      float drawnHeight = settingsVisible ? MODULE_CARD_HEIGHT + settingsHeight : MODULE_CARD_HEIGHT;
+
+      renderer2D.shadow(cardX, cardY + 1.5F, MODULE_CARD_WIDTH, MODULE_CARD_HEIGHT, 6.5F, 5.0F, 0.4F,
+            Renderer2D.ColorUtil.rgba(0, 0, 0, (int)(32.0F * mainAlpha)));
+      GlassStyle.card(renderer2D, cardX, cardY, MODULE_CARD_WIDTH, drawnHeight, mainAlpha);
+      if (settingsVisible && settingsAlphaAnim > 0.01F) {
+         renderer2D.rect(cardX, cardY + MODULE_CARD_HEIGHT, MODULE_CARD_WIDTH, 1.0F,
+               ColorUtil.multAlpha(palette.outline(), settingsAlphaAnim));
+      }
+
+      if (enableProgress > 0.01F) {
+         renderer2D.rect(cardX, cardY, MODULE_CARD_WIDTH, MODULE_CARD_HEIGHT, 6.5F,
+               Renderer2D.ColorUtil.rgba(255, 255, 255, (int)(7.0F * enableProgress * mainAlpha)));
+      }
+
+      float cardHover = GuiScreen.easeHover(
+            GuiScreen.cardHoverAnimations.getOrDefault(module, 0.0F),
+            isHovered(mouseX, mouseY, cardX, cardY, MODULE_CARD_WIDTH, MODULE_CARD_HEIGHT)
+      );
+      GuiScreen.cardHoverAnimations.put(module, cardHover);
+      if (cardHover > 0.01F) {
+         renderer2D.rect(cardX, cardY, MODULE_CARD_WIDTH, MODULE_CARD_HEIGHT, 6.5F,
+               Renderer2D.ColorUtil.rgba(255, 255, 255, (int)(10.0F * cardHover * mainAlpha)));
+      }
+
+      float nameX = cardX + MODULE_NAME_OFFSET_X;
+      float nameY = cardY + MODULE_NAME_OFFSET_Y;
+      renderer2D.text(FontRegistry.INTER_SEMIBOLD, nameX, nameY + MODULE_NAME_TEXT_OFFSET_Y, 14.0F, module.name, palette.text());
+      renderBindPill(renderer2D, module, nameX, nameY, mainAlpha, palette);
+
+      GlassStyle.toggle(renderer2D, cardX + MODULE_SWITCH_OFFSET_X, cardY + MODULE_SWITCH_OFFSET_Y, 26.0F, 13.0F, mainAlpha, enableProgress);
+
+      if (settingsVisible) {
+         float settingX = cardX + MODULE_SETTING_INSET_X;
+         float settingY = cardY + MODULE_CARD_HEIGHT + MODULE_SETTING_GAP;
+         float totalSettingsHeight = 0.0F;
+
+         for (Setting setting : moduleSettings) {
+            totalSettingsHeight += GuiRenderSetting.renderSetting(
+                  renderer2D,
+                  setting,
+                  settingX,
+                  settingY + totalSettingsHeight,
+                  SETTING_WIDTH,
+                  mouseX,
+                  mouseY,
+                  ColorUtil.multAlpha(palette.outline(), settingsAlphaAnim),
+                  ColorUtil.multAlpha(palette.main(), settingsAlphaAnim),
+                  ColorUtil.multAlpha(palette.main6(), settingsAlphaAnim),
+                  ColorUtil.multAlpha(palette.main40(), settingsAlphaAnim),
+                  ColorUtil.multAlpha(palette.text(), settingsAlphaAnim),
+                  mainAlpha * settingsAlphaAnim
+               )
+               * settingsAlphaAnim;
+         }
+      }
+   }
+
+   private static void renderBindPill(Renderer2D renderer2D, Module module, float nameX, float nameY, float mainAlpha, Palette palette) {
+      float bindAnim = GuiScreen.getModuleBindAnimation(module).get();
+      float bindWobble = GuiScreen.getBindWobble(module);
+      float bindWobbleBoost = GuiScreen.getBindWobbleBoost(module);
+      float pillAlpha = Math.max(Math.max(bindAnim, module.binding ? 1.0F : 0.35F), bindWobbleBoost);
+      float keyTextAlpha = module.binding ? 1.0F : Math.max(Math.max(bindAnim, 1.0F), bindWobbleBoost);
+      float bindHeight = 10.0F;
+      String keyText = module.binding ? "..." : (module.bind != -1 ? Keyboard.keyName(module.bind) : "None");
+      float keyTextWidth = renderer2D.measureText(FontRegistry.INTER_MEDIUM, keyText, 12.0F).width;
+      float buttonWidth = Math.max(6.0F, keyTextWidth + 6.0F);
+      float moduleNameWidth = renderer2D.measureText(FontRegistry.INTER_SEMIBOLD, module.name, 14.0F).width;
+      float bindX = nameX + moduleNameWidth + 6.0F + bindWobble;
+      float bindY = nameY - 0.35F;
+      renderer2D.rectOutline(bindX, bindY, buttonWidth, bindHeight, 3.0F, ColorUtil.multAlpha(palette.outline(), pillAlpha), 0.1F);
+      renderer2D.rect(bindX, bindY, buttonWidth, bindHeight, 3.0F, ColorUtil.multAlpha(palette.main6(), pillAlpha));
+      renderer2D.text(
+         FontRegistry.INTER_MEDIUM,
+         bindX + buttonWidth / 2.0F - keyTextWidth / 2.0F - 0.2F,
+         bindY + 2.0F + 5.25F,
+         12.0F,
+         keyText,
+         ColorUtil.multAlpha(palette.main(), keyTextAlpha)
+      );
+      if (bindWobbleBoost > 0.01F) {
+         renderer2D.rectOutline(bindX, bindY, buttonWidth, bindHeight, 3.0F, ColorUtil.multAlpha(palette.text(), bindWobbleBoost), 0.18F);
+         renderer2D.rect(bindX, bindY, buttonWidth, bindHeight, 3.0F, ColorUtil.multAlpha(palette.text(), bindWobbleBoost * 0.22F));
       }
    }
 
@@ -410,3 +313,4 @@ public class GuiRenderMain extends GuiScreen {
       return mouseX >= x && mouseY >= y && mouseX < x + width && mouseY < y + height;
    }
 }
+

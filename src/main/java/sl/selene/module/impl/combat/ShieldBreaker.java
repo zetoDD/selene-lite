@@ -13,6 +13,7 @@ import net.minecraft.util.hit.HitResult;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.RaycastContext;
+import org.lwjgl.glfw.GLFW;
 import sl.selene.Selene;
 import sl.selene.event.EventInit;
 import sl.selene.event.impl.EventChangeWorld;
@@ -37,13 +38,13 @@ import sl.selene.util.player.RotationUtil;
 public class ShieldBreaker extends Module {
 
    public static SliderSetting reach = new SliderSetting("Reach", 3.0F, 2.5F, 3.0F, 0.01F, false);
-   public static SliderSetting breakDelay = new SliderSetting("Break Delay (ticks)", 1.0F, 0.0F, 5.0F, 1.0F, false);
+   public static SliderSetting breakDelay = new SliderSetting("Break Delay (ticks)", 1.0F, 1.0F, 5.0F, 1.0F, false);
    public static ModeSetting rotate = new ModeSetting("Rotate", "Off", "Off", "Silent");
    public static BooleanSetting switchToAxe = new BooleanSetting("Switch To Axe", true);
    public static BooleanSetting switchBack = new BooleanSetting("Switch Back", true);
    public static ModeSetting fireMode = new ModeSetting("Fire Mode", "Always", "Always", "Hold LMB");
    public static BooleanSetting followUpHit = new BooleanSetting("Follow Up Hit", true);
-   public static SliderSetting followUpDelay = new SliderSetting("Follow Up Delay (ticks)", 4.0F, 0.0F, 10.0F, 1.0F, false)
+   public static SliderSetting followUpDelay = new SliderSetting("Follow Up Delay (ticks)", 4.0F, 1.0F, 10.0F, 1.0F, false)
          .hidden(() -> !followUpHit.get());
    public static SliderSetting followUpCharge = new SliderSetting("Follow Up Charge (%)", 100.0F, 50.0F, 100.0F, 1.0F, false)
          .hidden(() -> !followUpHit.get());
@@ -62,6 +63,7 @@ public class ShieldBreaker extends Module {
    private boolean clickHeld;
    private long clickReleaseAt;
    private int boundAttackKeyCode = -1;
+   private InputUtil.Key boundAttackKey;
    private int lastAttackAge = Integer.MIN_VALUE;
    private int prevSlot = -1;
    private int swapAge = -1;
@@ -159,7 +161,7 @@ public class ShieldBreaker extends Module {
          this.swapAge = mc.player.age;
       }
 
-      if (this.swapAge >= 0 && mc.player.age - this.swapAge < Math.round(breakDelay.get())) {
+      if (this.swapAge >= 0 && mc.player.age - this.swapAge < Math.max(1, Math.round(breakDelay.get()))) {
          return;
       }
       if (this.lastBreakAge >= 0 && mc.player.age >= this.lastBreakAge
@@ -194,7 +196,7 @@ public class ShieldBreaker extends Module {
          return;
       }
 
-      int delay = Math.round(followUpDelay.get());
+      int delay = Math.max(1, Math.round(followUpDelay.get()));
       int ticksSinceBreak = mc.player.age - this.shieldBreakAge;
       if (player.isBlocking()) {
          if (ticksSinceBreak >= delay + FOLLOW_UP_TIMEOUT) {
@@ -353,11 +355,10 @@ public class ShieldBreaker extends Module {
       mc.crosshairTarget = hit;
       refreshBoundAttackKeyCode();
       if (boundAttackKeyCode > 0) {
-         KeyBinding.setKeyPressed(InputUtil.fromTranslationKey(
-               mc.options.attackKey.getBoundKeyTranslationKey()), true);
-      } else {
-         KeyBinding.onKeyPressed(InputUtil.fromTranslationKey(
-               mc.options.attackKey.getBoundKeyTranslationKey()));
+         KeyBinding.setKeyPressed(boundAttackKey, true);
+         KeyBinding.onKeyPressed(boundAttackKey);
+      } else if (boundAttackKey != null) {
+         KeyBinding.onKeyPressed(boundAttackKey);
       }
       clickHeld = true;
       clickReleaseAt = System.currentTimeMillis() + CLICK_HOLD_MIN + (long) (Math.random() * CLICK_HOLD_SPREAD);
@@ -366,30 +367,52 @@ public class ShieldBreaker extends Module {
    }
 
    private void refreshBoundAttackKeyCode() {
+      boundAttackKey = null;
+      boundAttackKeyCode = -1;
       if (mc.options == null) {
-         boundAttackKeyCode = -1;
          return;
       }
       InputUtil.Key key = InputUtil.fromTranslationKey(mc.options.attackKey.getBoundKeyTranslationKey());
       if (key == null || key.getCode() == InputUtil.UNKNOWN_KEY.getCode()) {
-         boundAttackKeyCode = -1;
-      } else {
-         boundAttackKeyCode = key.getCode();
+         return;
       }
+      boundAttackKey = key;
+      boundAttackKeyCode = key.getCode();
    }
 
    private void releaseClick() {
       if (!clickHeld) {
          return;
       }
-      if (mc.options != null && boundAttackKeyCode > 0) {
-         KeyBinding.setKeyPressed(InputUtil.fromTranslationKey(
-               mc.options.attackKey.getBoundKeyTranslationKey()), false);
-         mc.options.attackKey.setPressed(false);
+      if (mc.options != null && boundAttackKeyCode > 0 && boundAttackKey != null) {
+         InputUtil.Key current = InputUtil.fromTranslationKey(mc.options.attackKey.getBoundKeyTranslationKey());
+         if (current != null && current.getCategory() == boundAttackKey.getCategory()
+               && current.getCode() == boundAttackKeyCode) {
+            if (!isPhysicallyPressed(boundAttackKey)) {
+               KeyBinding.setKeyPressed(boundAttackKey, false);
+            }
+         } else {
+            mc.options.attackKey.setPressed(false);
+         }
       }
       clickHeld = false;
       CrosshairPin.clear(this);
       boundAttackKeyCode = -1;
+      boundAttackKey = null;
+   }
+
+   private boolean isPhysicallyPressed(InputUtil.Key key) {
+      long handle = mc.getWindow() != null ? mc.getWindow().getHandle() : 0L;
+      if (handle == 0L) {
+         return false;
+      }
+      if (key.getCategory() == InputUtil.Type.MOUSE) {
+         return GLFW.glfwGetMouseButton(handle, key.getCode()) == GLFW.GLFW_PRESS;
+      }
+      if (key.getCategory() == InputUtil.Type.KEYSYM) {
+         return mc.getWindow() != null && InputUtil.isKeyPressed(mc.getWindow(), key.getCode());
+      }
+      return false;
    }
 
    private int findAxeSlot() {
@@ -439,3 +462,4 @@ public class ShieldBreaker extends Module {
       };
    }
 }
+

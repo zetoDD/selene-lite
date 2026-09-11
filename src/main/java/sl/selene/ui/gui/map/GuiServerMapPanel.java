@@ -16,8 +16,8 @@ import sl.selene.util.render.ui.UiIcons;
 
 @Environment(EnvType.CLIENT)
 public final class GuiServerMapPanel extends GuiScreen {
-   public static final float MAP_BUTTON_X_OFFSET = 364.35F;
-   public static final float MAP_BUTTON_SIZE = 21.325F;
+   public static final float MAP_BUTTON_RIGHT_INSET = 10.0F;
+   public static final float MAP_BUTTON_SIZE = 20.0F;
    private static final String TARGET_SERVER_IP = "194.164.96.153";
 
    private static final BlueMapTileView TILE_VIEW = new BlueMapTileView();
@@ -79,7 +79,7 @@ public final class GuiServerMapPanel extends GuiScreen {
 
       GuiScreen.serverMapOpen = open;
       if (open) {
-         GuiScreen.settingsPageOpen = false;
+         GuiScreen.selectTab(GuiScreen.TAB_MODULES);
          GuiScreen.configInputActive = false;
          TILE_VIEW.open();
       } else {
@@ -102,11 +102,11 @@ public final class GuiServerMapPanel extends GuiScreen {
    }
 
    public static float mapButtonX() {
-      return GuiScreen.x + GuiScreen.width - MAP_BUTTON_X_OFFSET - MAP_BUTTON_SIZE;
+      return GuiScreen.x + GuiScreen.width - MAP_BUTTON_RIGHT_INSET - MAP_BUTTON_SIZE;
    }
 
    public static float mapButtonY() {
-      return GuiScreen.y + 6.185F;
+      return GuiScreen.y + 21.0F;
    }
 
    public static void renderMapButton(Renderer2D renderer2D, float mainAlpha) {
@@ -123,7 +123,7 @@ public final class GuiServerMapPanel extends GuiScreen {
          renderer2D.rect(bx, by, MAP_BUTTON_SIZE, MAP_BUTTON_SIZE, 6.5F, activeBg);
       }
 
-      UiIcons.map(renderer2D, bx + MAP_BUTTON_SIZE * 0.5F, by + MAP_BUTTON_SIZE * 0.5F, 13.0F, mainAlpha);
+      UiIcons.map(renderer2D, bx + MAP_BUTTON_SIZE * 0.5F, by + MAP_BUTTON_SIZE * 0.5F, 12.0F, mainAlpha);
    }
 
    public static void renderPanel(Renderer2D renderer2D, MatrixStack pose, float mainAlpha) {
