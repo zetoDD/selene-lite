@@ -547,8 +547,7 @@ public final class AutoMace extends Module {
       if (System.currentTimeMillis() - lastAttackMs < Math.round(cooldown.get())) {
          return false;
       }
-      float perTick = Math.max(1.0F, mc.player.getAttackCooldownProgressPerTick());
-      return mc.player.getAttackCooldownProgress(0.0F) * perTick >= SMASH_CHARGE_TICKS;
+      return mc.player.getAttackCooldownProgress(0.0F) >= 0.95F;
    }
 
    private double effectiveAttackRange() {
