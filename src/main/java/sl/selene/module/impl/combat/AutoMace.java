@@ -727,9 +727,7 @@ public final class AutoMace extends Module {
    }
 
    private void finishCycle() {
-      restoreSlot();
-      clearSequence();
-      state = State.LOCKED;
+      restCycle();
    }
 
    private void resetCycle() {
