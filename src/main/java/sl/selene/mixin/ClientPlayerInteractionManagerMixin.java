@@ -11,6 +11,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import sl.selene.event.EventManager;
 import sl.selene.event.player.AttackEvent;
+import sl.selene.event.player.AttackExecutedEvent;
 
 @Environment(EnvType.CLIENT)
 @Mixin({ClientPlayerInteractionManager.class})
@@ -26,5 +27,13 @@ public abstract class ClientPlayerInteractionManagerMixin {
       if (event.isCancelled()) {
          ci.cancel();
       }
+   }
+
+   @Inject(
+      method = {"attackEntity"},
+      at = {@At("TAIL")}
+   )
+   private void onAttackEntityExecuted(PlayerEntity player, Entity target, CallbackInfo ci) {
+      EventManager.call(new AttackExecutedEvent(target));
    }
 }

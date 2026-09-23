@@ -6,6 +6,7 @@ import net.fabricmc.api.Environment;
 import sl.selene.Selene;
 import sl.selene.module.impl.combat.AimAssist;
 import sl.selene.module.impl.combat.AntiBot;
+import sl.selene.module.impl.combat.AutoMace;
 import sl.selene.module.impl.combat.ShieldBreaker;
 import sl.selene.module.impl.combat.SpearLunge;
 import sl.selene.module.impl.combat.TriggerBot;
@@ -42,6 +43,7 @@ public class Manager {
    public Manager() {
       this.module.add(new AimAssist());
       this.module.add(new AntiBot());
+      this.module.add(new AutoMace());
       this.module.add(new TriggerBot());
       this.module.add(new ShieldBreaker());
       this.module.add(new SpearLunge());
