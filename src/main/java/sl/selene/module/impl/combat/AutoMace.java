@@ -727,7 +727,7 @@ public final class AutoMace extends Module {
    }
 
    private void finishCycle() {
-      restCycle();
+      resetCycle();
    }
 
    private void resetCycle() {
