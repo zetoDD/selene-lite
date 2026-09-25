@@ -23,7 +23,6 @@ import sl.selene.event.impl.EventChangeWorld;
 import sl.selene.event.impl.EventScreen;
 import sl.selene.event.lifecycle.ClientTickEvent;
 import sl.selene.event.player.AttackExecutedEvent;
-import sl.selene.mixin.MinecraftClientAccessor;
 import sl.selene.module.api.Category;
 import sl.selene.module.api.IModule;
 import sl.selene.module.api.Module;
@@ -41,7 +40,6 @@ public final class AutoMace extends Module {
    private static final double MIN_DROP = 1.5D;
    private static final double MAX_ATTACK_RANGE = 2.95D;
    private static final double AIM_EDGE = 0.5D;
-   private static final float SMASH_CHARGE_TICKS = 5.0F;
    private static final int INPUT_RETRY_TICKS = 3;
    private static final int MAX_SEQUENCE_TICKS = 30;
    private static final long DIRECT_HIT_JITTER_MS = 2L;
@@ -59,7 +57,7 @@ public final class AutoMace extends Module {
    private final SliderSetting minFallDistance = new SliderSetting("Min Fall Distance", 1.5F, 0.0F, 10.0F, 0.1F, false);
    private final SliderSetting cooldown = new SliderSetting("Cooldown (ms)", 500.0F, 100.0F, 5000.0F, 50.0F, false);
    private final BooleanSetting stunSlam = new BooleanSetting("Stun Slam", true);
-   private final SliderSetting stunDelay = new SliderSetting("Stun Delay (Ticks)", 2.0F, 1.0F, 8.0F, 1.0F, false)
+   private final SliderSetting stunDelay = new SliderSetting("Stun Delay (Ticks)", 1.0F, 1.0F, 8.0F, 1.0F, false)
          .hidden(() -> !stunSlam.get());
    private final BooleanSetting pauseWhileEating = new BooleanSetting("Pause While Eating", true);
    private final BooleanSetting pauseInGui = new BooleanSetting("Pause In GUI", true);
@@ -79,6 +77,7 @@ public final class AutoMace extends Module {
    private boolean cycleConsumed;
    private boolean stunAxeExecuted;
    private boolean stunMaceExecuted;
+   private boolean stunMaceAttempted;
    private long clientTickId;
    private long axeExecutedTickId = -1L;
    private long stunStartedMs;
@@ -202,8 +201,6 @@ public final class AutoMace extends Module {
       float smoothing = state == State.IDLE ? 12.0F : 18.0F;
       aimer.aim(getAimPoint(activeTarget), aimStrength, aimStrength, smoothing, 0.0F, "Smooth");
       pollDirectHit();
-      pollStunAxe();
-      pollStunMace();
    }
 
    @EventInit
@@ -215,8 +212,14 @@ public final class AutoMace extends Module {
          stunAxeExecuted = true;
          axeExecutedTickId = clientTickId;
          axeAttackAge = mc.player.age;
+         stunStartedMs = System.currentTimeMillis();
+         retries = 0;
+         lastRetryAge = mc.player.age;
+         state = State.STUN_WAIT;
       } else if (state == State.STUN_MACE_READY && mc.player.getMainHandStack().getItem() instanceof MaceItem) {
          stunMaceExecuted = true;
+         lastAttackMs = System.currentTimeMillis();
+         beginRestore();
       }
    }
 
@@ -247,6 +250,7 @@ public final class AutoMace extends Module {
       lastRetryAge = mc.player.age;
       stunAxeExecuted = false;
       stunMaceExecuted = false;
+      stunMaceAttempted = false;
       axeExecutedTickId = -1L;
       stunStartedMs = 0L;
       stateStartedAge = mc.player.age;
@@ -274,8 +278,18 @@ public final class AutoMace extends Module {
                finishCycle();
             }
          }
-         case STUN_AXE_READY -> tickStunAxeWait();
-         case STUN_WAIT, STUN_MACE_READY -> tickStunMaceWait();
+         case STUN_AXE_READY -> {
+            pollStunAxe();
+            if (state == State.STUN_AXE_READY) {
+               tickStunAxeWait();
+            }
+         }
+         case STUN_WAIT, STUN_MACE_READY -> {
+            pollStunMace();
+            if (state == State.STUN_WAIT || state == State.STUN_MACE_READY) {
+               tickStunMaceWait();
+            }
+         }
          case RESTORE -> tickRestore();
          default -> finishCycle();
       }
@@ -340,8 +354,12 @@ public final class AutoMace extends Module {
       if (!slots.ready(1)) {
          return;
       }
-      stunAxeExecuted = false;
       if (!attackPreparedTarget()) {
+         finishCycle();
+         return;
+      }
+      if (preparedMaceSlot < 0 || !selectSlot(preparedMaceSlot)) {
+         finishCycle();
          return;
       }
       stunAxeExecuted = true;
@@ -356,30 +374,32 @@ public final class AutoMace extends Module {
    private void pollStunMace() {
       if ((state != State.STUN_WAIT && state != State.STUN_MACE_READY)
             || !stunAxeExecuted || axeExecutedTickId < 0L
-            || clientTickId <= axeExecutedTickId) {
+            || clientTickId <= axeExecutedTickId || stunMaceAttempted) {
          return;
       }
       long elapsedTicks = clientTickId - axeExecutedTickId;
       boolean urgent = isUrgent();
-      if (elapsedTicks < Math.max(1L, legacyTickGap() - 1L) && !urgent) {
+      if (elapsedTicks < legacyTickGap() && !urgent) {
          return;
       }
       state = State.STUN_MACE_READY;
-      if (preparedMaceSlot < 0 || !selectSlot(preparedMaceSlot)
+      if (preparedMaceSlot < 0
+            || mc.player.getInventory().getSelectedSlot() != preparedMaceSlot
             || !(mc.player.getMainHandStack().getItem() instanceof MaceItem)) {
          finishCycle();
          return;
       }
-      if (!slots.ready(1) || elapsedTicks < legacyTickGap() && !urgent) {
+      if (!slots.ready(1)) {
          return;
       }
-      stunMaceExecuted = false;
+      if (!hasSmashFallRequirement()) {
+         finishCycle();
+         return;
+      }
+      stunMaceAttempted = true;
       if (!attackPreparedTarget()) {
-         return;
+         finishCycle();
       }
-      stunMaceExecuted = true;
-      lastAttackMs = System.currentTimeMillis();
-      beginRestore();
    }
 
    private void beginRestore() {
@@ -402,15 +422,16 @@ public final class AutoMace extends Module {
          return false;
       }
 
-      EntityHitResult hitResult = getCurrentCrosshairTarget();
-      if (hitResult == null || !hit.press(hitResult)) {
+      EntityHitResult hitResult = raycastTarget(target);
+      if (hitResult == null) {
          return false;
       }
 
       try {
-         MinecraftClientAccessor accessor = (MinecraftClientAccessor) mc;
-         accessor.setAttackCooldown(0);
-         return accessor.invokeDoAttack();
+         mc.crosshairTarget = hitResult;
+         mc.targetedEntity = target;
+         mc.interactionManager.attackEntity(mc.player, target);
+         return true;
       } finally {
          clearQueuedAttack();
          hit.release();
@@ -452,7 +473,7 @@ public final class AutoMace extends Module {
    }
 
    private int legacyTickGap() {
-      return 1 + Math.max(1, Math.round(stunDelay.get()));
+      return Math.max(1, Math.round(stunDelay.get()));
    }
 
    private boolean isUrgent() {
@@ -544,7 +565,6 @@ public final class AutoMace extends Module {
    }
 
    private boolean isAttackReady() {
-      float perTick = Math.max(1.0F, mc.player.getAttackCooldownProgressPerTick());
       if (System.currentTimeMillis() - lastAttackMs < Math.round(cooldown.get())) {
          return false;
       }
@@ -749,6 +769,7 @@ public final class AutoMace extends Module {
       lastRetryAge = -1;
       stunAxeExecuted = false;
       stunMaceExecuted = false;
+      stunMaceAttempted = false;
       axeExecutedTickId = -1L;
       stunStartedMs = 0L;
       directHitDueNs = 0L;
@@ -778,6 +799,7 @@ public final class AutoMace extends Module {
       cycleConsumed = false;
       stunAxeExecuted = false;
       stunMaceExecuted = false;
+      stunMaceAttempted = false;
       clientTickId = 0L;
       axeExecutedTickId = -1L;
       stunStartedMs = 0L;
